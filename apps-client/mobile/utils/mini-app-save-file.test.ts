@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  isInSaveFileCooldown,
   parseSaveFileBridgeRequest,
   parseSaveFileRequest,
   safeFileName,
+  SAVE_FILE_COOLDOWN_MS,
   SAVE_FILE_MAX_BYTES,
   saveFileScript,
 } from './mini-app-save-file'
@@ -13,7 +15,7 @@ const PNG_BASE64 = 'iVBORw0KGgoAAAANSUhEUg=='
 
 const message = (overrides: Record<string, unknown> = {}) =>
   JSON.stringify({
-    type: 'pple:save-file',
+    type: 'pple:download-link',
     version: 1,
     secret: SECRET,
     fileName: 'promptpay-qr.png',
@@ -57,6 +59,18 @@ describe('parseSaveFileRequest', () => {
     ).toBeNull()
   })
 
+  it('reads common non-standard image types as the standard one', () => {
+    expect(parseSaveFileRequest(message({ mimeType: 'image/jpg' }), SECRET)?.mimeType).toBe(
+      'image/jpeg'
+    )
+    expect(parseSaveFileRequest(message({ mimeType: 'image/PJPEG' }), SECRET)?.mimeType).toBe(
+      'image/jpeg'
+    )
+    expect(
+      parseSaveFileRequest(message({ mimeType: 'image/x-png; foo=bar', fileName: 'a.png' }), SECRET)
+    ).toMatchObject({ mimeType: 'image/png', fileName: 'a.png' })
+  })
+
   it('ignores other bridge traffic and junk', () => {
     expect(
       parseSaveFileRequest(
@@ -81,6 +95,12 @@ describe('parseSaveFileBridgeRequest', () => {
       dataBase64: PNG_BASE64,
       ...overrides,
     })
+
+  it('reads a non-standard image type as the standard one', () => {
+    expect(
+      parseSaveFileBridgeRequest(request({ mimeType: 'image/jpg', fileName: 'photo.jpg' }))
+    ).toMatchObject({ ok: true, file: { mimeType: 'image/jpeg', fileName: 'photo.jpg' } })
+  })
 
   it('reads an SDK saveFile() request, which needs no secret', () => {
     expect(parseSaveFileBridgeRequest(request())).toEqual({
@@ -116,11 +136,33 @@ describe('parseSaveFileBridgeRequest', () => {
   })
 })
 
+describe('isInSaveFileCooldown', () => {
+  it('holds requests off for a second after a sheet closes', () => {
+    expect(isInSaveFileCooldown(null, 5_000)).toBe(false)
+    expect(isInSaveFileCooldown(5_000, 5_000)).toBe(true)
+    expect(isInSaveFileCooldown(5_000, 5_000 + SAVE_FILE_COOLDOWN_MS - 1)).toBe(true)
+    expect(isInSaveFileCooldown(5_000, 5_000 + SAVE_FILE_COOLDOWN_MS)).toBe(false)
+  })
+})
+
 describe('safeFileName', () => {
   it('keeps a plain name and gives it the extension of its type', () => {
     expect(safeFileName('promptpay-qr.png', 'image/png')).toBe('promptpay-qr.png')
     expect(safeFileName('ใบเสร็จ', 'application/pdf')).toBe('ใบเสร็จ.pdf')
     expect(safeFileName('photo.jpeg', 'image/jpeg')).toBe('photo.jpg')
+  })
+
+  it('replaces a known image or PDF extension only, in any case', () => {
+    expect(safeFileName('receipt.PDF', 'application/pdf')).toBe('receipt.pdf')
+    expect(safeFileName('photo.HEIF', 'image/heic')).toBe('photo.heic')
+    expect(safeFileName('photo.webp', 'image/png')).toBe('photo.png')
+  })
+
+  it('keeps a dotted name that does not end in a known extension', () => {
+    expect(safeFileName('receipt.2026.pdf', 'application/pdf')).toBe('receipt.2026.pdf')
+    expect(safeFileName('receipt.2026', 'application/pdf')).toBe('receipt.2026.pdf')
+    expect(safeFileName('v1.2', 'image/png')).toBe('v1.2.png')
+    expect(safeFileName('notes.txt', 'image/png')).toBe('notes.txt.png')
   })
 
   it('drops any path, control characters and reserved characters', () => {
@@ -138,11 +180,16 @@ async function runScript(options: {
   isTrusted?: boolean
   blob?: { type: string; size: number }
   ok?: boolean
+  platform?: 'ios' | 'android'
+  pageHref?: string
 }) {
   const posted: string[] = []
+  const page = new URL(options.pageHref ?? 'https://calm-plum-wolf.ppleth.ai/pay')
   const location = {
-    href: 'https://calm-plum-wolf.ppleth.ai/pay',
-    origin: 'https://calm-plum-wolf.ppleth.ai',
+    href: page.href,
+    origin: page.origin,
+    protocol: page.protocol,
+    hostname: page.hostname,
   }
   let listener: ((e: unknown) => void) | null = null
   let prevented = false
@@ -167,12 +214,13 @@ async function runScript(options: {
     },
   }
   const document = { addEventListener: (_: string, fn: (e: unknown) => void) => (listener = fn) }
-  new Function('window', 'document', 'location', 'URL', saveFileScript(SECRET))(
-    window,
-    document,
-    location,
-    URL
-  )
+  new Function(
+    'window',
+    'document',
+    'location',
+    'URL',
+    saveFileScript(SECRET, { platform: options.platform ?? 'ios' })
+  )(window, document, location, URL)
   listener!({
     isTrusted: options.isTrusted ?? true,
     target: { closest: () => anchor },
@@ -197,6 +245,36 @@ describe('saveFileScript', () => {
     })
   })
 
+  it('on Android takes only blob: and data: links, leaving http(s) to the WebView', async () => {
+    const sameOrigin = await runScript({
+      href: 'https://calm-plum-wolf.ppleth.ai/qr.png',
+      platform: 'android',
+    })
+    expect(sameOrigin.prevented).toBe(false)
+    expect(sameOrigin.posted).toHaveLength(0)
+
+    for (const href of [
+      'blob:https://calm-plum-wolf.ppleth.ai/abc',
+      'data:image/png;base64,AAAA',
+    ]) {
+      const run = await runScript({ href, platform: 'android' })
+      expect(run.prevented).toBe(true)
+      expect(run.posted).toHaveLength(1)
+    }
+  })
+
+  it('does nothing on a page off the allowed domains or without https', async () => {
+    for (const pageHref of [
+      'https://app.pages.dev/pay',
+      'https://evilpplethai.org/pay',
+      'http://calm-plum-wolf.ppleth.ai/pay',
+    ]) {
+      const run = await runScript({ href: `${pageHref.split('/pay')[0]}/qr.png`, pageHref })
+      expect(run.prevented).toBe(false)
+      expect(run.posted).toHaveLength(0)
+    }
+  })
+
   it('leaves another origin and an untrusted (scripted) click to the WebView', async () => {
     expect((await runScript({ href: 'https://elsewhere.example/qr.png' })).prevented).toBe(false)
     const scripted = await runScript({
@@ -205,6 +283,14 @@ describe('saveFileScript', () => {
     })
     expect(scripted.prevented).toBe(false)
     expect(scripted.posted).toHaveLength(0)
+  })
+
+  it('posts a non-standard image type as the standard one', async () => {
+    const { posted } = await runScript({
+      href: 'https://calm-plum-wolf.ppleth.ai/f.jpg',
+      blob: { type: 'image/JPG; charset=x', size: 10 },
+    })
+    expect(JSON.parse(posted[0]).mimeType).toBe('image/jpeg')
   })
 
   it('opens the file as before when it is a type the host does not save, too big, or not there', async () => {

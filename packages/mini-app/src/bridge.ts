@@ -15,6 +15,9 @@ import {
  */
 const MINI_APP_USER_AGENT = /PPLETodayApp\/(\d+\.\d+\.\d+)\s+MiniApp/
 const ACK_TIMEOUT_MS = 3_000
+// A save request carries up to ~13 MB that the host must receive and parse
+// before it acks, so its ack gets far longer than a session request's.
+const SAVE_FILE_ACK_TIMEOUT_MS = 30_000
 // The host may be showing the user a role prompt before it answers.
 const RESPONSE_TIMEOUT_MS = 120_000
 
@@ -22,6 +25,8 @@ const RESPONSE_TIMEOUT_MS = 120_000
 // leak a `window.ReactNativeWebView` into every consumer.
 type ReactNativeWebViewWindow = Window & {
   ReactNativeWebView?: { postMessage?: (message: string) => void }
+  // Set by PPLE Today's injected script, in the top frame only.
+  __ppleHost?: unknown
 }
 
 export function isMiniAppUserAgent() {
@@ -38,6 +43,49 @@ export function hasBridge() {
     isMiniAppUserAgent() &&
     typeof (window as ReactNativeWebViewWindow).ReactNativeWebView?.postMessage === 'function'
   )
+}
+
+/**
+ * What PPLE Today offers this page, as `{ name: version }`; `{}` outside PPLE
+ * Today, without the bridge, or when `window.__ppleHost` is malformed.
+ *
+ * The host's injected script sets `window.__ppleHost = { version: 1,
+ * capabilities: { … } }` in the top frame, listing only what this page may
+ * use. It is read at call time, not cached: on Android the script runs at the
+ * start of the page load, best effort, so it can land after the page's first
+ * scripts. The host still checks every request itself; this list is a hint.
+ */
+export function getHostCapabilities(): Record<string, number> {
+  if (!hasBridge()) return {}
+  const host = (window as ReactNativeWebViewWindow).__ppleHost
+  if (typeof host !== 'object' || host === null) return {}
+  const capabilities = (host as { capabilities?: unknown }).capabilities
+  if (typeof capabilities !== 'object' || capabilities === null) return {}
+  const result: Record<string, number> = {}
+  for (const [name, version] of Object.entries(capabilities)) {
+    if (typeof version === 'number' && Number.isFinite(version)) result[name] = version
+  }
+  return result
+}
+
+/**
+ * Whether PPLE Today offers `name` to this page at `minVersion` or newer.
+ * A capability's protocol changes only by raising its number.
+ */
+export function hasCapability(name: string, minVersion = 1): boolean {
+  const version = getHostCapabilities()[name]
+  return typeof version === 'number' && version >= minVersion
+}
+
+/** Sends a message the host answers with nothing: no ack, no reply. Never throws. */
+export function postToHost(message: { type: string } & Record<string, unknown>): void {
+  try {
+    ;(window as ReactNativeWebViewWindow).ReactNativeWebView?.postMessage?.(
+      JSON.stringify({ ...message, version: 1 })
+    )
+  } catch {
+    // Nothing to do: the host is not there.
+  }
 }
 
 function createRequestId() {
@@ -76,8 +124,17 @@ function sendBridgeRequest<T>(options: {
   responseType: string
   parseResponse: (data: unknown) => T | null
   responseTimeoutMs: number | null
+  /** How long to wait for the ack. Defaults to 3 s. */
+  ackTimeoutMs?: number
 }): Promise<BridgeOutcome<T>> {
-  const { message, ackType, responseType, parseResponse, responseTimeoutMs } = options
+  const {
+    message,
+    ackType,
+    responseType,
+    parseResponse,
+    responseTimeoutMs,
+    ackTimeoutMs = ACK_TIMEOUT_MS,
+  } = options
 
   return new Promise((resolve) => {
     const requestId = createRequestId()
@@ -120,7 +177,7 @@ function sendBridgeRequest<T>(options: {
     }
 
     window.addEventListener('message', onMessage)
-    const ackTimer = setTimeout(() => finish({ ok: false, failure: 'no-ack' }), ACK_TIMEOUT_MS)
+    const ackTimer = setTimeout(() => finish({ ok: false, failure: 'no-ack' }), ackTimeoutMs)
 
     try {
       ;(window as ReactNativeWebViewWindow).ReactNativeWebView?.postMessage?.(
@@ -193,7 +250,9 @@ export async function requestRoleSwitchFromHost(
  * Hands a file to the host, which opens the share sheet with it (Save Image,
  * Save to Files, another app). Resolves once the sheet has closed — there is
  * no response timeout, as the user may take their time — or with
- * `unavailable` when the host does not answer (an older PPLE Today).
+ * `unavailable` when the host does not ack within 30 s. Call it only when
+ * `hasCapability('saveFile')`: it is the one host that is there, so there is no
+ * fallback.
  */
 export async function requestSaveFileFromHost(file: {
   fileName: string
@@ -206,6 +265,7 @@ export async function requestSaveFileFromHost(file: {
     responseType: 'pple:save-file-response',
     parseResponse: (data) => SaveFileResponseSchema.safeParse(data).data ?? null,
     responseTimeoutMs: null,
+    ackTimeoutMs: SAVE_FILE_ACK_TIMEOUT_MS,
   })
 
   if (!outcome.ok) {

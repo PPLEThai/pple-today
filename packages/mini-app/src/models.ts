@@ -116,14 +116,24 @@ export const SsoMeResponseSchema = z.object({
   }),
 })
 
+export const SaveFileDeniedReasonSchema = z.enum([
+  'unsupported-type',
+  'too-large',
+  'busy',
+  'insecure-origin',
+  'not-allowed',
+  'error',
+])
+export type SaveFileDeniedReason = z.infer<typeof SaveFileDeniedReasonSchema>
+
 export const SaveFileResponseSchema = z.discriminatedUnion('status', [
   // The share sheet was shown and has closed. Whether the user saved, sent
   // or dismissed it, iOS and Android do not say.
-  z.object({ type: z.literal('pple:save-file-response'), status: z.literal('shared') }),
+  z.object({ type: z.literal('pple:save-file-response'), status: z.literal('presented') }),
   z.object({
     type: z.literal('pple:save-file-response'),
     status: z.literal('denied'),
-    reason: z.enum(['unsupported-type', 'too-large', 'busy', 'error']),
+    reason: SaveFileDeniedReasonSchema,
   }),
 ])
 export type SaveFileResponse = z.infer<typeof SaveFileResponseSchema>

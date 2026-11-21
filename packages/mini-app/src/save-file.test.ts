@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { SAVE_FILE_MAX_BYTES, saveFile } from './save-file'
 
@@ -14,6 +14,8 @@ type HostAnswer = Record<string, unknown> | 'silent'
 function page(options: {
   userAgent?: string
   host?: HostAnswer
+  /** `window.__ppleHost`; PPLE Today sets it with a `saveFile` capability, an older one does not. Defaults to set when there is a host. */
+  flag?: boolean
   phone?: boolean
   share?: (data: { files: File[] }) => Promise<void>
   canShare?: boolean
@@ -35,6 +37,8 @@ function page(options: {
     addEventListener: (_: string, fn: (typeof listeners)[number]) => listeners.push(fn),
     removeEventListener: (_: string, fn: (typeof listeners)[number]) =>
       listeners.splice(listeners.indexOf(fn), 1),
+    __ppleHost:
+      (options.flag ?? !!options.host) ? { version: 1, capabilities: { saveFile: 1 } } : undefined,
     ReactNativeWebView: options.host
       ? {
           postMessage: (raw: string) => {
@@ -72,7 +76,31 @@ function page(options: {
   return { posted, downloads }
 }
 
+/** Node has no `FileReader`; this one reads a blob into a data URL like the browser's. */
+class FakeFileReader {
+  result: string | null = null
+  error: Error | null = null
+  onload: (() => void) | null = null
+  onerror: (() => void) | null = null
+  static failWith: Error | null = null
+  async readAsDataURL(blob: Blob) {
+    const buffer = await blob.arrayBuffer()
+    if (FakeFileReader.failWith) {
+      this.error = FakeFileReader.failWith
+      this.onerror?.()
+      return
+    }
+    this.result = `data:${blob.type};base64,${Buffer.from(buffer).toString('base64')}`
+    this.onload?.()
+  }
+}
+
 const png = () => new Blob([new Uint8Array([0x89, 0x50, 0x4e, 0x47])], { type: 'image/png' })
+
+beforeEach(() => {
+  FakeFileReader.failWith = null
+  vi.stubGlobal('FileReader', FakeFileReader)
+})
 
 afterEach(() => {
   vi.unstubAllGlobals()
@@ -81,9 +109,9 @@ afterEach(() => {
 
 describe('saveFile inside PPLE Today', () => {
   test('hands the file to the host and reports the share sheet closing', async () => {
-    const { posted, downloads } = page({ host: { status: 'shared' } })
+    const { posted, downloads } = page({ host: { status: 'presented' } })
 
-    expect(await saveFile(png(), { fileName: 'qr.png' })).toEqual({ status: 'shared' })
+    expect(await saveFile(png(), { fileName: 'qr.png' })).toEqual({ status: 'presented' })
     expect(posted).toHaveLength(1)
     expect(posted[0]).toMatchObject({
       type: 'pple:save-file-request',
@@ -96,13 +124,29 @@ describe('saveFile inside PPLE Today', () => {
     expect(downloads).toHaveLength(0)
   })
 
+  test('sends a non-standard image type as the standard one', async () => {
+    const { posted } = page({ host: { status: 'presented' } })
+    const blob = (type: string) => new Blob([new Uint8Array([1, 2, 3])], { type })
+
+    await saveFile(blob('image/JPG'))
+    await saveFile(blob('image/pjpeg; q=1'))
+    await saveFile(blob('image/x-png'))
+    expect(posted.map((m) => m.mimeType)).toEqual(['image/jpeg', 'image/jpeg', 'image/png'])
+  })
+
+  test('fails with `error` when the file cannot be read', async () => {
+    page({ host: { status: 'presented' } })
+    FakeFileReader.failWith = new Error('read')
+    expect(await saveFile(png())).toEqual({ status: 'failed', reason: 'error' })
+  })
+
   test('fetches a URL and names the file after it', async () => {
     const { posted } = page({
-      host: { status: 'shared' },
+      host: { status: 'presented' },
       fetch: async () => new Response(png()),
     })
 
-    expect(await saveFile('/receipts/%E0%B9%83%E0%B8%9A.png')).toEqual({ status: 'shared' })
+    expect(await saveFile('/receipts/%E0%B9%83%E0%B8%9A.png')).toEqual({ status: 'presented' })
     expect(posted[0]).toMatchObject({ fileName: 'ใบ.png', mimeType: 'image/png' })
   })
 
@@ -115,22 +159,50 @@ describe('saveFile inside PPLE Today', () => {
   })
 
   test('refuses a file over the limit without sending it', async () => {
-    const { posted } = page({ host: { status: 'shared' } })
+    const { posted } = page({ host: { status: 'presented' } })
     const big = { size: SAVE_FILE_MAX_BYTES + 1, type: 'image/png' } as Blob
 
     expect(await saveFile(big)).toEqual({ status: 'failed', reason: 'too-large' })
     expect(posted).toHaveLength(0)
   })
 
-  test('falls back to a download when an older host never answers', async () => {
+  test('passes the new denial reasons on', async () => {
+    for (const reason of ['insecure-origin', 'not-allowed', 'busy'] as const) {
+      page({ host: { status: 'denied', reason } })
+      expect(await saveFile(png())).toEqual({ status: 'failed', reason })
+    }
+  })
+
+  test('never falls back: a host that does not ack in 30 s is an error', async () => {
     vi.useFakeTimers()
     const { downloads } = page({ host: 'silent', phone: false })
 
     const result = saveFile(png(), { fileName: 'qr.png' })
     await vi.advanceTimersByTimeAsync(3_000)
+    let settled = false
+    void result.then(() => (settled = true))
+    await vi.advanceTimersByTimeAsync(0)
+    expect(settled).toBe(false) // the 3 s a session request waits is not enough here
 
-    expect(await result).toEqual({ status: 'downloaded' })
+    await vi.advanceTimersByTimeAsync(27_000)
+    expect(await result).toEqual({ status: 'failed', reason: 'error' })
+    expect(downloads).toHaveLength(0)
+  })
+
+  test('goes straight to the browser when the host has set no flag', async () => {
+    const { posted, downloads } = page({ host: 'silent', flag: false, phone: false })
+
+    expect(await saveFile(png(), { fileName: 'qr.png' })).toEqual({ status: 'downloaded' })
+    expect(posted).toHaveLength(0)
     expect(downloads).toEqual([{ href: 'blob:x', download: 'qr.png' }])
+  })
+
+  test('sends the mimeType option, normalised, instead of the blob type', async () => {
+    const { posted } = page({ host: { status: 'presented' } })
+    const blob = new Blob([new Uint8Array([1, 2, 3])], { type: 'application/octet-stream' })
+
+    await saveFile(blob, { mimeType: 'Image/JPG; charset=x' })
+    expect(posted[0]).toMatchObject({ mimeType: 'image/jpeg' })
   })
 })
 
@@ -142,6 +214,15 @@ describe('saveFile in a browser', () => {
     expect(await saveFile(png(), { fileName: 'qr.png' })).toEqual({ status: 'shared' })
     expect(shared[0][0].name).toBe('qr.png')
     expect(downloads).toHaveLength(0)
+  })
+
+  test('gives the browser the mimeType option too', async () => {
+    const shared: File[][] = []
+    page({ share: async ({ files }) => void shared.push(files) })
+    const blob = new Blob([new Uint8Array([1, 2, 3])], { type: 'application/octet-stream' })
+
+    await saveFile(blob, { fileName: 'a.jpg', mimeType: 'image/pjpeg' })
+    expect(shared[0][0].type).toBe('image/jpeg')
   })
 
   test('reports a dismissed share sheet as cancelled', async () => {

@@ -18,17 +18,18 @@ const token = await miniApp.getAccessToken()
 const profile = await miniApp.getProfile()
 ```
 
-| Method                     | What it does                                                                                     |
-| -------------------------- | ------------------------------------------------------------------------------------------------ |
-| `init()`                   | Gets a session: from PPLE Today (launch URL or [session bridge](./BRIDGE.md)), or by signing in. |
-| `getAccessToken()`         | The access token. Inside PPLE Today it is refreshed shortly before it expires.                   |
-| `getProfile()`             | The PPLE ID userinfo, including `kyc` when PPLE ID reports it.                                   |
-| `refreshProfile()`         | Fetches the userinfo from PPLE ID again.                                                         |
-| `switchRole()`             | Lets the user switch บทบาท (see [BRIDGE.md](./BRIDGE.md#role-switching)).                        |
-| `startKyc({ returnTo? })`  | Sends the user to PPLE ID to verify their identity.                                              |
-| `consumeKycResult()`       | How the user left KYC, if they just came back from it. A UI hint only.                           |
-| `saveFile(file, options?)` | Saves a `Blob` or URL: PPLE Today's share sheet, else the browser's (see below).                 |
-| `isMiniApp()` / `logout()` | Whether the app runs inside PPLE Today / ends the session.                                       |
+| Method                      | What it does                                                                                     |
+| --------------------------- | ------------------------------------------------------------------------------------------------ |
+| `init()`                    | Gets a session: from PPLE Today (launch URL or [session bridge](./BRIDGE.md)), or by signing in. |
+| `getAccessToken()`          | The access token. Inside PPLE Today it is refreshed shortly before it expires.                   |
+| `getProfile()`              | The PPLE ID userinfo, including `kyc` when PPLE ID reports it.                                   |
+| `refreshProfile()`          | Fetches the userinfo from PPLE ID again.                                                         |
+| `switchRole()`              | Lets the user switch บทบาท (see [BRIDGE.md](./BRIDGE.md#role-switching)).                        |
+| `startKyc({ returnTo? })`   | Sends the user to PPLE ID to verify their identity.                                              |
+| `consumeKycResult()`        | How the user left KYC, if they just came back from it. A UI hint only.                           |
+| `saveFile(file, options?)`  | Saves a `Blob` or URL: PPLE Today's share sheet, else the browser's (see below).                 |
+| `haptic(style)` / `ready()` | A haptic tap / the first screen is up (see below).                                               |
+| `isMiniApp()` / `logout()`  | Whether the app runs inside PPLE Today / ends the session.                                       |
 
 ## Saving a file
 
@@ -37,20 +38,54 @@ import { saveFile } from '@pplethai/pple-today-miniapp-sdk'
 
 button.onclick = async () => {
   const result = await saveFile(qrBlob, { fileName: 'promptpay-qr.png' }) // or a URL
-  // { status: 'shared' | 'downloaded' | 'cancelled' } or { status: 'failed', reason }
+  // { status: 'presented' | 'shared' | 'downloaded' | 'cancelled' } or { status: 'failed', reason }
 }
 ```
 
 Inside PPLE Today the host opens the share sheet with the file, where Save Image puts an image in
-Photos. In a phone's browser it uses the browser's share sheet; on a computer it downloads. It
-also works without `init()`, and as `miniApp.saveFile()`.
+Photos, and the result is `presented` (the sheet was shown and closed; whether the user saved is not
+known). In a phone's browser it uses the browser's share sheet (`shared`); on a computer it
+downloads (`downloaded`). It also works without `init()`, and as `miniApp.saveFile()`.
 
 - PPLE Today takes PNG, JPEG, GIF, WebP, HEIC and PDF files of up to 10 MB.
+- Only pages on `peoplesparty.or.th`, `pplethai.org` and `ppleth.ai` (and their subdomains, over
+  `https`) can save in PPLE Today. A preview host such as `*.pages.dev` cannot: the result is
+  `failed` with `not-allowed` (or `insecure-origin` without `https`).
+- Only the app's main page can save, not an iframe on another origin.
+- Inside PPLE Today there is no browser fallback after a failure, and PPLE Today shows no error of
+  its own: use `result.reason` (`unsupported-type`, `too-large`, `busy`, `insecure-origin`,
+  `not-allowed`, `error`, or `fetch-failed`) to show your own. An older PPLE Today, which does not
+  list the `saveFile` capability, gets the browser's share sheet or download at once.
+- `mimeType` replaces the Blob's type, for a server that sends `application/octet-stream`:
+  `saveFile(blob, { fileName: 'qr.png', mimeType: 'image/png' })`.
 - A URL is fetched by the page, so a file on another origin needs that origin to allow it (CORS).
 - Call it from a tap, because the browser's share sheet needs one.
-- A plain download link (`<a href download>`) to a file on the app's own origin also works in
-  PPLE Today on iPhone without the SDK. Use `saveFile()` for files made in code, files on another
-  origin, or saves after an `await`. See [BRIDGE.md](./BRIDGE.md#saving-a-file).
+- A plain download link (`<a href download>`) also works in PPLE Today without the SDK: on iPhone to
+  a file on the app's own origin, a `blob:` or a `data:` URL; on Android a `blob:` or `data:` URL
+  (other links use the WebView's own download). Use `saveFile()` for files made in code, files on
+  another origin, or saves after an `await`. See [BRIDGE.md](./BRIDGE.md#saving-a-file).
+
+## Capabilities, haptics and the ready signal
+
+```ts
+import { getHostCapabilities, haptic, hasCapability, ready } from '@pplethai/pple-today-miniapp-sdk'
+
+getHostCapabilities() // { saveFile: 1, haptics: 1, ready: 1 } in PPLE Today, {} elsewhere
+hasCapability('haptics') // read at call time (on Android it may appear late); see BRIDGE.md#capabilities
+
+haptic('success') // 'selection' | 'light' | 'medium' | 'heavy' | 'soft' | 'rigid' | 'success' | 'warning' | 'error'
+ready() // the first screen has rendered
+```
+
+- `haptic()` and `ready()` need no `init()`, also exist as `miniApp.haptic()` and `miniApp.ready()`,
+  never throw, and do nothing outside PPLE Today. `haptic()` works only on pages on
+  `peoplesparty.or.th`, `pplethai.org` or `ppleth.ai` (and subdomains, over `https`).
+- PPLE Today shows its loading screen until the page first loads (not again on later routes). To
+  keep it until your first screen is there, put `<meta name="pple-today:ready" content="manual">` in `index.html` and call `ready()`
+  once it has rendered. Without the call the host waits at most 8 s after load; without the tag,
+  `ready()` is harmless.
+- Camera and microphone, file inputs and location also work in PPLE Today's WebView: see
+  [BRIDGE.md](./BRIDGE.md#web-features-that-work-in-pple-today).
 
 ## Identity verification (KYC)
 
