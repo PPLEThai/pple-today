@@ -1,5 +1,13 @@
 # @client/mobile
 
+## 2.16.4
+
+### Patch Changes
+
+- [#572](https://github.com/PPLEThai/pple-today/pull/572) [`9282ff9`](https://github.com/PPLEThai/pple-today/commit/9282ff935a129094b05a2282b638052ec8f0a858) Thanks [@PanJ](https://github.com/PanJ)! - On Android, horizontal lists inside a feed (such as แนะนำให้ติดตาม and the topic and banner slides) scroll again instead of swiping to the next feed tab. Upgrades react-native-pager-view from 9.0.7 to 9.0.11, which adds nested horizontal ScrollView support to its Android pager.
+
+- [#570](https://github.com/PPLEThai/pple-today/pull/570) [`c111885`](https://github.com/PPLEThai/pple-today/commit/c11188588a9261ac7fd1846bd9cda0a9dbec9faa) Thanks [@PanJ](https://github.com/PanJ)! - On iOS 26, the tab bar's orange pill takes longer to cross the bar than to move to the next tab, instead of shooting across it in the same time.
+
 ## 2.16.3
 
 ### Patch Changes
