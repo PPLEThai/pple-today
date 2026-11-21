@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  parseSaveFileBridgeRequest,
   parseSaveFileRequest,
   safeFileName,
   SAVE_FILE_MAX_BYTES,
@@ -24,8 +25,6 @@ const message = (overrides: Record<string, unknown> = {}) =>
 describe('parseSaveFileRequest', () => {
   it('reads a save the injected script sent', () => {
     expect(parseSaveFileRequest(message(), SECRET)).toEqual({
-      type: 'pple:save-file',
-      version: 1,
       fileName: 'promptpay-qr.png',
       mimeType: 'image/png',
       kind: 'image',
@@ -68,6 +67,52 @@ describe('parseSaveFileRequest', () => {
     expect(parseSaveFileRequest('{', SECRET)).toBeNull()
     expect(parseSaveFileRequest(42, SECRET)).toBeNull()
     expect(parseSaveFileRequest(message({ version: 2 }), SECRET)).toBeNull()
+  })
+})
+
+describe('parseSaveFileBridgeRequest', () => {
+  const request = (overrides: Record<string, unknown> = {}) =>
+    JSON.stringify({
+      type: 'pple:save-file-request',
+      version: 1,
+      requestId: 'req-1',
+      fileName: 'qr.png',
+      mimeType: 'image/png',
+      dataBase64: PNG_BASE64,
+      ...overrides,
+    })
+
+  it('reads an SDK saveFile() request, which needs no secret', () => {
+    expect(parseSaveFileBridgeRequest(request())).toEqual({
+      requestId: 'req-1',
+      ok: true,
+      file: { fileName: 'qr.png', mimeType: 'image/png', kind: 'image', dataBase64: PNG_BASE64 },
+    })
+  })
+
+  it('answers a file it will not take with the reason', () => {
+    expect(parseSaveFileBridgeRequest(request({ mimeType: 'text/csv' }))).toEqual({
+      requestId: 'req-1',
+      ok: false,
+      reason: 'unsupported-type',
+    })
+    expect(
+      parseSaveFileBridgeRequest(
+        request({ dataBase64: 'A'.repeat(Math.ceil(SAVE_FILE_MAX_BYTES / 3) * 4 + 4) })
+      )
+    ).toMatchObject({ ok: false, reason: 'too-large' })
+    expect(parseSaveFileBridgeRequest(request({ dataBase64: '!!' }))).toMatchObject({
+      ok: false,
+      reason: 'error',
+    })
+  })
+
+  it('ignores what it cannot answer: no request id, another version, other messages', () => {
+    expect(parseSaveFileBridgeRequest(request({ requestId: undefined }))).toBeNull()
+    expect(parseSaveFileBridgeRequest(request({ requestId: 'x'.repeat(257) }))).toBeNull()
+    expect(parseSaveFileBridgeRequest(request({ version: 2 }))).toBeNull()
+    expect(parseSaveFileBridgeRequest(message())).toBeNull()
+    expect(parseSaveFileBridgeRequest('{')).toBeNull()
   })
 })
 

@@ -115,3 +115,15 @@ export const SsoMeResponseSchema = z.object({
     approved_roles: z.array(EligiblePersonSchema).nullish(),
   }),
 })
+
+export const SaveFileResponseSchema = z.discriminatedUnion('status', [
+  // The share sheet was shown and has closed. Whether the user saved, sent
+  // or dismissed it, iOS and Android do not say.
+  z.object({ type: z.literal('pple:save-file-response'), status: z.literal('shared') }),
+  z.object({
+    type: z.literal('pple:save-file-response'),
+    status: z.literal('denied'),
+    reason: z.enum(['unsupported-type', 'too-large', 'busy', 'error']),
+  }),
+])
+export type SaveFileResponse = z.infer<typeof SaveFileResponseSchema>

@@ -169,10 +169,62 @@ the user back to `return_to?kyc=passed|pending_review|cancelled`. See the
   of its own (its session comes from the host), so PPLE ID may ask the user to log in
   again. A token handoff for `/kyc` (PPLEThai/pple-sso#177) would fix this.
 
-## Saving a downloaded file (iOS)
+## Saving a file
 
-A mini app offers a file the ordinary way, with a download link (`<a href="…" download="name.png">`).
-It needs no SDK call and no message of its own. On iOS, WKWebView would open that file and offer
+A mini app can hand PPLE Today a file to save, two ways:
+
+- **`saveFile()`** in the SDK, a request/response over the bridge, on both platforms.
+- **A download link** (`<a download>`), which the host catches on iOS. It needs no SDK.
+
+### `saveFile()`
+
+```ts
+// page → host
+type SaveFileRequest = {
+  type: 'pple:save-file-request'
+  version: 1
+  requestId: string
+  fileName: string
+  mimeType: string // the Blob's type
+  dataBase64: string
+}
+
+// host → page: sent immediately on receipt
+type SaveFileAck = { type: 'pple:save-file-ack'; requestId: string }
+
+// host → page: once the share sheet has closed, or at once when it cannot be shown
+type SaveFileResponse =
+  | { type: 'pple:save-file-response'; requestId: string; status: 'shared' }
+  | {
+      type: 'pple:save-file-response'
+      requestId: string
+      status: 'denied'
+      reason: 'unsupported-type' | 'too-large' | 'busy' | 'error'
+    }
+```
+
+The SDK waits up to **3 s for the ack**; after it there is **no timeout**, since the user acts on
+the share sheet. `shared` means the sheet was shown and closed: iOS and Android do not say whether
+the user saved, sent, or dismissed it.
+
+Host rules:
+
+1. It takes the origin from `event.nativeEvent.url`, as for a session. A page with no web origin
+   gets no ack. A page that is not `https` is denied (`error`).
+2. It accepts the types and size listed below; anything else is denied (`unsupported-type`,
+   `too-large`).
+3. One share sheet at a time; a second request while one is open is denied (`busy`).
+4. The request carries no secret. The page can only offer a file, and the user decides what
+   happens to it in the share sheet.
+
+Without the bridge (a browser, or an older PPLE Today that never acks), `saveFile()` uses the
+browser's share sheet on a phone when it can share files (`navigator.canShare`), and otherwise
+downloads the file.
+
+### Download links (iOS)
+
+A mini app can also offer a file the ordinary way, with a download link (`<a href="…" download="name.png">`).
+This needs no SDK call and no message of its own. On iOS, WKWebView would open that file and offer
 no way to save it, and a native download would not carry the page's cookies, so the host does
 it in the page:
 
@@ -205,6 +257,8 @@ it in the page:
 - **The page's CSP** must allow the fetch (`connect-src` covering the file's origin). Without it,
   the fetch fails and the file opens as before.
 - **Android** is left alone: its WebView downloads the file itself, with the page's cookies.
+- **What a link cannot do**, which needs `saveFile()`: a click from code (`a.click()`, which is not
+  `isTrusted`), a file on another origin, or a download started after an `await` (no longer a tap).
 
 ## Backward compatibility
 

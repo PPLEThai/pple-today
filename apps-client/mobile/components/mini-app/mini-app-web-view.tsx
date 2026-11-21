@@ -137,7 +137,7 @@ export function MiniAppWebView({
   // the inset changes, since an injected script only runs on the next load.
   const injectedBottomInset = bottomInset === undefined ? undefined : bottomInsetScript(bottomInset)
   // Saving what a page offers with <a download> (a QR, a receipt): the WebView cannot itself.
-  const saveFile = useSaveFile()
+  const saveFile = useSaveFile(miniAppRef)
   const injectedBeforeLoad = [saveFile.script, injectedBottomInset].filter(Boolean).join('\n')
   useEffect(() => {
     if (injectedBottomInset) miniAppRef.current?.injectJavaScript(injectedBottomInset)
