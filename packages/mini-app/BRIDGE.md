@@ -169,6 +169,42 @@ the user back to `return_to?kyc=passed|pending_review|cancelled`. See the
   of its own (its session comes from the host), so PPLE ID may ask the user to log in
   again. A token handoff for `/kyc` (PPLEThai/pple-sso#177) would fix this.
 
+## Saving a downloaded file (iOS)
+
+A mini app offers a file the ordinary way, with a download link (`<a href="…" download="name.png">`).
+It needs no SDK call and no message of its own. On iOS, WKWebView would open that file and offer
+no way to save it, and a native download would not carry the page's cookies, so the host does
+it in the page:
+
+- **Injected script** (`saveFileScript`, `injectedJavaScriptBeforeContentLoaded`). On a real tap
+  (`isTrusted`) on an `<a download>` whose `href` has the page's own origin (or is `blob:` / `data:`),
+  it cancels the navigation and fetches the file as the page (`credentials: 'include'`). It then
+  posts the file to the host:
+
+  ```ts
+  // page (the host's injected script) → host; no reply
+  type SaveFileRequest = {
+    type: 'pple:save-file'
+    version: 1
+    secret: string // known only to the injected script's closure
+    fileName: string // the link's `download` name, else the URL's last segment
+    mimeType: string // the response's type
+    dataBase64: string
+  }
+  ```
+
+  Another origin, a failed fetch, a type the host does not save, or a file over 10 MB: the script
+  opens the file as the WebView always did.
+- **Host.** It acts only on a message with the injected script's secret, from an `https` page. A page
+  cannot forge one by posting to `ReactNativeWebView` itself, because the secret is not reachable
+  from page scripts. It saves `image/png`, `image/jpeg`, `image/gif`, `image/webp` and `image/heic`
+  to Photos, asking once for add-only access (`NSPhotoLibraryAddUsageDescription`), and offers
+  `application/pdf` through the share sheet. Nothing else is saved. One save at a time; a toast
+  says how it went.
+- **The page's CSP** must allow the fetch (`connect-src` covering the file's origin). Without it,
+  the fetch fails and the file opens as before.
+- **Android** is left alone: its WebView downloads the file itself, with the page's cookies.
+
 ## Backward compatibility
 
 | Host                           | SDK                 | Result                                                                                    |
