@@ -197,10 +197,10 @@ it in the page:
   opens the file as the WebView always did.
 - **Host.** It acts only on a message with the injected script's secret, from an `https` page. A page
   cannot forge one by posting to `ReactNativeWebView` itself, because the secret is not reachable
-  from page scripts. It saves `image/png`, `image/jpeg`, `image/gif`, `image/webp` and `image/heic`
-  to Photos, asking once for add-only access (`NSPhotoLibraryAddUsageDescription`), and offers
-  `application/pdf` through the share sheet. Nothing else is saved. One save at a time; a toast
-  says how it went.
+  from page scripts. It accepts `image/png`, `image/jpeg`, `image/gif`, `image/webp`, `image/heic`
+  and `application/pdf`; nothing else. It opens the share sheet with the file, where the user picks
+  Save Image (to Photos, with iOS asking for access then: `NSPhotoLibraryAddUsageDescription`),
+  Save to Files, or another app. One file at a time.
 - **The page's CSP** must allow the fetch (`connect-src` covering the file's origin). Without it,
   the fetch fails and the file opens as before.
 - **Android** is left alone: its WebView downloads the file itself, with the page's cookies.

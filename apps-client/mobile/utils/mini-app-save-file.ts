@@ -6,8 +6,8 @@
  *
  * So the host injects a script (`saveFileScript`) that catches the tap on a
  * same-origin `<a download>` link, fetches the file as the page (with its
- * cookies), and posts it to the host as `pple:save-file`; the host saves an
- * image to Photos and offers anything else through the share sheet. Mini apps
+ * cookies), and posts it to the host as `pple:save-file`; the host opens the
+ * share sheet with it (Save Image puts an image in Photos). Mini apps
  * change nothing: an ordinary download link is enough (packages/mini-app/BRIDGE.md).
  *
  * The message carries a secret only the injected script knows, held in its
@@ -17,14 +17,17 @@
 
 export const SAVE_FILE_REQUEST_TYPE = 'pple:save-file'
 
-/** What the host saves: images to Photos, PDFs through the share sheet. Nothing else. */
-export const SAVE_FILE_TYPES: Record<string, { kind: 'image' | 'document'; extension: string }> = {
-  'image/png': { kind: 'image', extension: 'png' },
-  'image/jpeg': { kind: 'image', extension: 'jpg' },
-  'image/gif': { kind: 'image', extension: 'gif' },
-  'image/webp': { kind: 'image', extension: 'webp' },
-  'image/heic': { kind: 'image', extension: 'heic' },
-  'application/pdf': { kind: 'document', extension: 'pdf' },
+/** What the host hands to the share sheet (Save Image for an image), with its iOS type. Nothing else. */
+export const SAVE_FILE_TYPES: Record<
+  string,
+  { kind: 'image' | 'document'; extension: string; uti: string }
+> = {
+  'image/png': { kind: 'image', extension: 'png', uti: 'public.png' },
+  'image/jpeg': { kind: 'image', extension: 'jpg', uti: 'public.jpeg' },
+  'image/gif': { kind: 'image', extension: 'gif', uti: 'com.compuserve.gif' },
+  'image/webp': { kind: 'image', extension: 'webp', uti: 'org.webmproject.webp' },
+  'image/heic': { kind: 'image', extension: 'heic', uti: 'public.heic' },
+  'application/pdf': { kind: 'document', extension: 'pdf', uti: 'com.adobe.pdf' },
 }
 
 /** The largest file the script sends (bytes). Bigger ones open in the WebView as before. */

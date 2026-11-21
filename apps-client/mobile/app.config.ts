@@ -38,9 +38,8 @@ export default {
       },
       infoPlist: {
         UIBackgroundModes: ['fetch', 'remote-notification'],
-        // Saving an image a mini app offers for download (a QR to pay with) to
-        // Photos: add-only. Set here, not through expo-media-library's plugin,
-        // which would also add Android media-read permissions the app does not use.
+        // The share sheet's "Save Image", for an image a mini app offers for
+        // download (a QR to pay with): iOS refuses (and the app crashes) without it.
         NSPhotoLibraryAddUsageDescription:
           'Allow PPLE Today to save images you choose to save, such as a payment QR code, to your photos.',
       },
@@ -53,15 +52,6 @@ export default {
       package: process.env.DEVELOPER_APP_IDENTIFIER,
       googleServicesFile: './credentials/google-services.json',
       softwareKeyboardLayoutMode: 'pan',
-      // expo-media-library saves to Photos on iOS only (it is not linked on Android,
-      // package.json expo.autolinking), but its config plugin, applied on install,
-      // would still ask Android for media-read access the app never uses.
-      blockedPermissions: [
-        'android.permission.READ_MEDIA_IMAGES',
-        'android.permission.READ_MEDIA_VIDEO',
-        'android.permission.READ_MEDIA_AUDIO',
-        'android.permission.READ_MEDIA_VISUAL_USER_SELECTED',
-      ],
       ...(miniAppDeepLink.android?.intentFilters
         ? { intentFilters: miniAppDeepLink.android.intentFilters }
         : {}),
