@@ -14,7 +14,7 @@ import { MapPinnedIcon, VoteIcon } from 'lucide-react-native'
 import { ElectionWithCurrentStatus, GetElectionResponse } from '@api/backoffice/app'
 import { AvatarPPLEFallback } from '@app/components/avatar-pple-fallback'
 import { ElectionDetailCard } from '@app/components/election/election-card'
-import { BackHeader, useHeaderGlass, usePageHeaderInset } from '@app/components/page-header'
+import { BackHeader, useHeaderGlass } from '@app/components/page-header'
 import { SafeAreaLayout } from '@app/components/safe-area-layout'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useAuthMe } from '@app/libs/auth'
@@ -30,7 +30,6 @@ export default function ElectionDetailPage() {
 
   const params = useLocalSearchParams()
   const electionId = params.electionId as string
-  const headerInset = usePageHeaderInset()
   useEffect(() => {
     if (!electionId) {
       router.dismissTo('/')
@@ -54,17 +53,17 @@ export default function ElectionDetailPage() {
   return (
     <Layout className="flex-1 flex-col bg-base-bg-white">
       <BackHeader className="pt-4 pb-2 px-4 bg-base-bg-white" glass={headerGlass.glass} />
-      {!election ? (
-        <View className="flex flex-col gap-3 px-4" style={{ paddingTop: headerInset }}>
-          <Skeleton className="h-5 mt-2 w-1/2 rounded-2xl" />
-          <Skeleton className="h-40 w-full rounded-2xl" />
-        </View>
-      ) : (
-        <>
-          <ScrollView
-            contentContainerClassName="flex flex-col gap-3 px-4"
-            {...headerGlass.scrollProps}
-          >
+      {/* Mounted from the first render, with the skeleton inside: mounted only
+          once the election has loaded, UIKit insets it below the iOS 26 bar
+          without moving it there, and its top starts under the header. */}
+      <ScrollView contentContainerClassName="flex flex-col gap-3 px-4" {...headerGlass.scrollProps}>
+        {!election ? (
+          <>
+            <Skeleton className="h-5 mt-2 w-1/2 rounded-2xl" />
+            <Skeleton className="h-40 w-full rounded-2xl" />
+          </>
+        ) : (
+          <>
             <H1 className="text-xl font-heading-semibold text-base-text-high">{election.name}</H1>
             <ElectionDetailCard election={election} />
             {election.status !== 'RESULT_ANNOUNCE' && election.description && (
@@ -74,10 +73,10 @@ export default function ElectionDetailPage() {
             )}
             <ElectionCandidateList election={election} />
             <ElectionResult election={election} />
-          </ScrollView>
-          <ElectionAction election={election} />
-        </>
-      )}
+          </>
+        )}
+      </ScrollView>
+      {election && <ElectionAction election={election} />}
     </Layout>
   )
 }

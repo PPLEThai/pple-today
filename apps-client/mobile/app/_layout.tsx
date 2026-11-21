@@ -2,7 +2,7 @@ import '../global.css'
 import 'dayjs/locale/th'
 
 import * as React from 'react'
-import { PermissionsAndroid, Platform } from 'react-native'
+import { AppState, PermissionsAndroid, Platform } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { DevToolsBubble } from 'react-native-react-query-devtools'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
@@ -78,7 +78,10 @@ import {
   TRAY_RESULT_CATEGORY,
 } from '@app/utils/tray-interaction'
 
-import { optimisticMarkAsRead } from './(tabs)/(feed)/notification'
+import {
+  infiniteNotificationsQueryOptions,
+  optimisticMarkAsRead,
+} from './(tabs)/(feed)/notification'
 
 dayjs.extend(buddhistEra)
 dayjs.extend(duration)
@@ -270,8 +273,14 @@ function FacebookConnectOutboxFlush() {
 /**
  * Keeps the app icon badge (the red circle with a number) in sync with the
  * unread notification count. `/notifications/unread-count` is updated
- * optimistically on read and on incoming push messages, so this only needs
- * to mirror that query's value onto the native badge.
+ * optimistically on read and on incoming push messages; this mirrors that
+ * query's value onto the native badge.
+ *
+ * The badge is also written from outside the app: APNs applies a push's
+ * `aps.badge` while the app is in the background. So the count is refetched
+ * whenever the app comes back to the foreground, and the badge is rewritten on
+ * every fetch, not only when the count changes: a cached 0 that the server
+ * confirms is still 0 must clear a badge APNs left at 1.
  */
 function AppIconBadgeSync() {
   const session = useSession()
@@ -281,6 +290,7 @@ function AppIconBadgeSync() {
     { enabled: !!session }
   )
   const unreadCount = unreadNotificationCountQuery.data?.unreadCount
+  const updatedAt = unreadNotificationCountQuery.dataUpdatedAt
 
   React.useEffect(() => {
     if (!session) {
@@ -290,7 +300,23 @@ function AppIconBadgeSync() {
     if (unreadCount !== undefined) {
       Notifications.setBadgeCountAsync(unreadCount).catch(() => {})
     }
-  }, [session, unreadCount])
+  }, [session, unreadCount, updatedAt])
+
+  // React Query's focus refetch listens for the browser's visibility events,
+  // which React Native never fires: without this, the count and the
+  // notification list keep what they had when the app was last in front, and
+  // only a relaunch (or the feed's pull-to-refresh) would bring them up to date.
+  React.useEffect(() => {
+    if (!session) return
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state !== 'active') return
+      queryClient.invalidateQueries({
+        queryKey: reactQueryClient.getQueryKey('/notifications/unread-count'),
+      })
+      queryClient.invalidateQueries({ queryKey: infiniteNotificationsQueryOptions.queryKey })
+    })
+    return () => subscription.remove()
+  }, [session])
 
   return null
 }
@@ -519,6 +545,10 @@ function NotificationTokenConsentPopup() {
           }
         }
       )
+
+      // The notification is already in the history: show it there too, rather
+      // than only bumping the count above the list.
+      queryClient.invalidateQueries({ queryKey: infiniteNotificationsQueryOptions.queryKey })
 
       toast.info({
         text1: title,

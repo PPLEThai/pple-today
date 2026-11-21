@@ -20,7 +20,7 @@ import {
   NotificationSenderIcon,
   PLATFORM_SENDER_NAME,
 } from '@app/components/notification/sender-icon'
-import { BackHeader, useHeaderGlass, usePageHeaderInset } from '@app/components/page-header'
+import { BackHeader, useHeaderGlass } from '@app/components/page-header'
 import { reactQueryClient } from '@app/libs/api-client'
 import { formatNotificationTime } from '@app/libs/format-notification-time'
 import type { PushSenderApp } from '@app/utils/branded-push'
@@ -41,7 +41,6 @@ export default function NotificationDetailPage() {
   const router = useRouter()
   const params = useLocalSearchParams()
   const notificationId = params.notificationId as string
-  const headerInset = usePageHeaderInset()
   const tabBarOverlap = useTabBarOverlap()
   // Set by a tray action that has to open the app (it has a confirm dialog or
   // required fields): the id of the interaction action to leave pending. A Live
@@ -141,18 +140,23 @@ export default function NotificationDetailPage() {
           )
         }
       />
-      {notificationDetailQuery.isLoading || !item ? (
-        <NotificationDetailSkeleton topInset={headerInset} />
-      ) : (
-        <>
-          {/* No flex-grow on the content: grown to the frame, the header and tab bar
-              insets would push it past the frame and a short message would scroll. */}
-          <ScrollView
-            className="flex-1 bg-base-bg-white"
-            contentContainerClassName="pt-1 pb-2 flex flex-col gap-3 px-4"
-            alwaysBounceVertical={false}
-            {...headerGlass.scrollProps}
-          >
+      {/* The ScrollView is mounted from the first render and the skeleton shown
+          inside it. Mounted only once the notification has loaded (its first
+          open, with nothing cached), it lands after the screen is on screen, and
+          UIKit then insets it below the iOS 26 bar without moving it there: the
+          message starts under the header until the user scrolls. */}
+      {/* No flex-grow on the content: grown to the frame, the header and tab bar
+          insets would push it past the frame and a short message would scroll. */}
+      <ScrollView
+        className="flex-1 bg-base-bg-white"
+        contentContainerClassName="pt-1 pb-2 flex flex-col gap-3 px-4"
+        alwaysBounceVertical={false}
+        {...headerGlass.scrollProps}
+      >
+        {notificationDetailQuery.isLoading || !item ? (
+          <NotificationDetailSkeleton />
+        ) : (
+          <>
             <H1 className="text-lg font-heading-semibold">{item.content.header}</H1>
             <LinkifiedText className="text-base-text-medium font-body-regular text-base">
               {item.content.message}
@@ -174,18 +178,18 @@ export default function NotificationDetailPage() {
                 <MiniAppInviteInbox />
               </View>
             )}
-          </ScrollView>
-          {action && !isInvite && (
-            // The floating tab bar covers the screen's bottom: end the button
-            // above it (the overlap already holds the gap), else keep pb-6.
-            <View className="p-4 bg-base-bg-white" style={{ paddingBottom: tabBarOverlap || 24 }}>
-              <Button onPress={action.onPress}>
-                <Icon icon={ArrowUpRightIcon} />
-                <Text>{action.label}</Text>
-              </Button>
-            </View>
-          )}
-        </>
+          </>
+        )}
+      </ScrollView>
+      {item && action && !isInvite && (
+        // The floating tab bar covers the screen's bottom: end the button
+        // above it (the overlap already holds the gap), else keep pb-6.
+        <View className="p-4 bg-base-bg-white" style={{ paddingBottom: tabBarOverlap || 24 }}>
+          <Button onPress={action.onPress}>
+            <Icon icon={ArrowUpRightIcon} />
+            <Text>{action.label}</Text>
+          </Button>
+        </View>
       )}
     </View>
   )
@@ -212,12 +216,9 @@ function NotificationSenderTitle({ app }: { app?: PushSenderApp }) {
   )
 }
 
-function NotificationDetailSkeleton({ topInset }: { topInset: number }) {
+function NotificationDetailSkeleton() {
   return (
-    <View
-      className="flex-1 pb-2 bg-base-bg-white flex-grow flex flex-col gap-3 px-4"
-      style={{ paddingTop: topInset + 4 }}
-    >
+    <View className="flex flex-col gap-3">
       <Skeleton className="w-full h-[18px] mt-[10px]" />
       <View>
         <Skeleton className="w-full h-4 mt-2" />
