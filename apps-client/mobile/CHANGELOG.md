@@ -1,5 +1,27 @@
 # @client/mobile
 
+## 2.17.0
+
+### Minor Changes
+
+- [#574](https://github.com/PPLEThai/pple-today/pull/574) [`0e6043f`](https://github.com/PPLEThai/pple-today/commit/0e6043f5913419d07bde18a566d828f91561258f) Thanks [@PanJ](https://github.com/PanJ)! - Mini apps can now save files to the phone from inside PPLE Today.
+
+  - **Download links.** A mini app's download link now opens the share sheet with the file instead of only showing it. For example, บันทึก QR ลงเครื่อง on the party's Checkout Page gives a payment QR the user can Save Image to Photos, save to Files, or send in LINE. Before, the WebView showed the file and there was no way to save it. On iPhone it takes same-origin, `blob:` and `data:` links; on Android only `blob:` and `data:` links, and the WebView's own download handles the rest.
+  - **`saveFile()` in the SDK (both platforms).** `saveFile(blobOrUrl, { fileName, mimeType? })` hands a file the app made or fetched to PPLE Today's share sheet and resolves `presented` once it closes. It covers what a download link cannot: files built in code, files on another origin, and downloads started after an async step. PPLE Today lists `saveFile` in `window.__ppleHost.capabilities`, and the SDK uses it only then; with no flag (a browser, an older PPLE Today) it uses the phone's share sheet, or downloads on a computer. Inside PPLE Today there is no fallback after a failure; `failed` carries a `reason`.
+  - **Where it works.** Only pages on `peoplesparty.or.th`, `pplethai.org` and `ppleth.ai` (and subdomains, over `https`) can save in PPLE Today, and only the main page, not an iframe.
+  - **Capabilities.** PPLE Today sets `window.__ppleHost = { version, capabilities }` before a page's scripts, listing what that page may use. On Android it can appear a little late, so the SDK reads it with `getHostCapabilities()` and `hasCapability(name, minVersion?)`.
+  - **Haptics.** `haptic('success')` (and the other styles) plays a haptic tap, for pages on the trusted domains. It does nothing in a browser.
+  - **Ready signal.** A page can keep PPLE Today's loading screen up until its first screen has rendered: add `<meta name="pple-today:ready" content="manual">` and call `ready()`. The host waits at most 8 s after load, so a page that never calls it is not stuck. The loading screen is now an overlay over the WebView, for the first load only (later routes never bring it back), and it also goes on a load error or crash. Holding it is best effort on Android.
+  - **Web features.** The WebView now enables camera and microphone for `getUserMedia` (asking each time on iPhone), inline video, and `navigator.geolocation` on Android. On Android the camera still needs the app's `CAMERA` permission, which this build does not declare.
+
+  Adds `expo-sharing`, `expo-file-system` and the Photos add permission text the share sheet's Save Image needs (`NSPhotoLibraryAddUsageDescription`), so it needs a new store build.
+
+### Patch Changes
+
+- [#572](https://github.com/PPLEThai/pple-today/pull/572) [`9282ff9`](https://github.com/PPLEThai/pple-today/commit/9282ff935a129094b05a2282b638052ec8f0a858) Thanks [@PanJ](https://github.com/PanJ)! - On Android, horizontal lists inside a feed (such as แนะนำให้ติดตาม and the topic and banner slides) scroll again instead of swiping to the next feed tab. Upgrades react-native-pager-view from 9.0.7 to 9.0.11, which adds nested horizontal ScrollView support to its Android pager.
+
+- [#570](https://github.com/PPLEThai/pple-today/pull/570) [`c111885`](https://github.com/PPLEThai/pple-today/commit/c11188588a9261ac7fd1846bd9cda0a9dbec9faa) Thanks [@PanJ](https://github.com/PanJ)! - On iOS 26, the tab bar's orange pill takes longer to cross the bar than to move to the next tab, instead of shooting across it in the same time.
+
 ## 2.16.3
 
 ### Patch Changes
