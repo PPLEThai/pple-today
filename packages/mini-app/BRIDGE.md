@@ -195,6 +195,7 @@ it in the page:
 
   Another origin, a failed fetch, a type the host does not save, or a file over 10 MB: the script
   opens the file as the WebView always did.
+
 - **Host.** It acts only on a message with the injected script's secret, from an `https` page. A page
   cannot forge one by posting to `ReactNativeWebView` itself, because the secret is not reachable
   from page scripts. It accepts `image/png`, `image/jpeg`, `image/gif`, `image/webp`, `image/heic`
