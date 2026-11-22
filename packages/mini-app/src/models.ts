@@ -14,7 +14,7 @@ export const IdTokenPayloadSchema = z.object({
 export type IdTokenPayload = z.infer<typeof IdTokenPayloadSchema>
 
 /**
- * The userinfo `kyc` block from PPLE ID. It says whether the person has proven
+ * The KYC Status from PPLE ID's `/api/kyc/status` (formerly the userinfo `kyc` block). It says whether the person has proven
  * their identity, never who they are: the verified name and ID number only
  * reach the app's server through the PPLE Platform.
  */

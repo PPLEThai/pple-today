@@ -186,11 +186,13 @@ export class PPLEMiniApp {
 
   private async fetchProfileByAccessToken(accessToken: string) {
     const userInfoEndpoint = await this.userManager.metadataService.getUserInfoEndpoint()
-    const userInfoResult = await fetch(userInfoEndpoint, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    })
+    const headers = { Authorization: `Bearer ${accessToken}` }
+
+    // Both requests start together; the KYC Status one never rejects.
+    const [userInfoResult, kycStatus] = await Promise.all([
+      fetch(userInfoEndpoint, { headers }),
+      this.fetchKycStatus(headers),
+    ])
 
     if (!userInfoResult.ok) {
       throw new Error('[PPLE Mini App] Failed to fetch user info from OAuth server')
@@ -204,8 +206,25 @@ export class PPLEMiniApp {
     }
 
     // Keep any claims this SDK does not model, but never a `kyc` block it
-    // could not read.
-    return { ...userInfoBody, kyc: userInfo.data.kyc }
+    // could not read. Userinfo's `kyc` is only the fallback while PPLE ID still
+    // sends it.
+    return { ...userInfoBody, kyc: kycStatus ?? userInfo.data.kyc }
+  }
+
+  /**
+   * The user's KYC Status from PPLE ID's `/api/kyc/status`, or `undefined` when
+   * it cannot be read (any non-200, network error or unreadable body).
+   */
+  private async fetchKycStatus(headers: Record<string, string>): Promise<Kyc | undefined> {
+    try {
+      const result = await fetch(new URL('/api/kyc/status', this.config.oauthUrl), { headers })
+      if (!result.ok) return undefined
+
+      const kyc = KycSchema.safeParse(await result.json())
+      return kyc.success ? kyc.data : undefined
+    } catch {
+      return undefined
+    }
   }
 
   /**
@@ -473,8 +492,10 @@ export class PPLEMiniApp {
   /**
    * The signed-in user's PPLE ID profile.
    *
-   * `kyc` is absent when PPLE ID does not report KYC (older versions, or KYC
-   * not enabled).
+   * `kyc` is PPLE ID's KYC Status, read from its `/api/kyc/status` endpoint
+   * (falling back to the userinfo `kyc` block while PPLE ID still sends it). It
+   * is `undefined` when PPLE ID cannot tell, e.g. KYC is not enabled or the
+   * status request failed.
    */
   async getProfile(): Promise<UserInfo | null> {
     if (!this._user) throw new Error('[PPLE Mini App] No user is currently logged in')
@@ -498,7 +519,7 @@ export class PPLEMiniApp {
 
   /**
    * Fetches the profile from PPLE ID again, never from a cache, e.g. to read
-   * the `kyc` block after the user comes back from `startKyc()`.
+   * `kyc` (the KYC Status) after the user comes back from `startKyc()`.
    */
   async refreshProfile(): Promise<UserInfo | null> {
     if (!this._user) throw new Error('[PPLE Mini App] No user is currently logged in')
@@ -537,8 +558,8 @@ export class PPLEMiniApp {
    * `null` when the page was not opened from KYC.
    *
    * **This is a UI hint only.** Anyone can type `?kyc=passed` into the address
-   * bar. To know whether the user is verified, read `kyc` from
-   * `refreshProfile()` — and on the server, ask the PPLE Platform.
+   * bar. To know whether the user is verified, read `kyc` (the KYC
+   * Status PPLE ID reports) from `refreshProfile()` — and on the server, ask the PPLE Platform.
    *
    * The value is read from the URL the page was opened with and removed from
    * the address bar, so reloading the page does not show the result again.
