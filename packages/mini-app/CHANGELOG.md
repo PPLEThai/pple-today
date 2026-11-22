@@ -1,5 +1,11 @@
 # @pplethai/pple-today-miniapp-sdk
 
+## 0.3.0
+
+### Minor Changes
+
+- [#578](https://github.com/PPLEThai/pple-today/pull/578) [`adce024`](https://github.com/PPLEThai/pple-today/commit/adce02400103c486c9b7c9879d36343cdaa9646c) Thanks [@PanJ](https://github.com/PanJ)! - `getProfile()` and `refreshProfile()` now read `kyc` from PPLE ID's `/api/kyc/status` endpoint, in parallel with userinfo. If that request fails they fall back to userinfo's `kyc` block while PPLE ID still sends it, and never fail because of it.
+
 ## 0.2.0
 
 ### Minor Changes
