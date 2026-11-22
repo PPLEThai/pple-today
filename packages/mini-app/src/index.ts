@@ -558,8 +558,9 @@ export class PPLEMiniApp {
    * `null` when the page was not opened from KYC.
    *
    * **This is a UI hint only.** Anyone can type `?kyc=passed` into the address
-   * bar. To know whether the user is verified, read `kyc` (the KYC
-   * Status PPLE ID reports) from `refreshProfile()` — and on the server, ask the PPLE Platform.
+   * bar. To know whether the user is verified, read `kyc` (the KYC Status
+   * PPLE ID reports) from `refreshProfile()` — and on the server, ask the
+   * PPLE Platform.
    *
    * The value is read from the URL the page was opened with and removed from
    * the address bar, so reloading the page does not show the result again.
