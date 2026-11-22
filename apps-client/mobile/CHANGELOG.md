@@ -1,5 +1,11 @@
 # @client/mobile
 
+## 2.17.1
+
+### Patch Changes
+
+- [#576](https://github.com/PPLEThai/pple-today/pull/576) [`2adec7d`](https://github.com/PPLEThai/pple-today/commit/2adec7d2468d236b3c6a074df8524a15a19b1d68) Thanks [@PanJ](https://github.com/PanJ)! - On iOS 26, a notification or election opened for the first time no longer starts with its content hidden under the header. The notification list and the app icon badge now catch up when the app returns to the foreground and when a notification arrives while it is open, so a stale badge number no longer sticks after the notifications are read.
+
 ## 2.17.0
 
 ### Minor Changes
