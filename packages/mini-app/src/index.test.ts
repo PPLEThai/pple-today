@@ -215,9 +215,16 @@ describe('PPLEMiniApp KYC', () => {
       source: 'kyc',
     }
 
+    // What the KYC Status endpoint answers; tests replace it.
+    let kycStatus: () => Response | Promise<Response> = () => new Response(null, { status: 404 })
+
     const signedIn = async (href: string, userInfo: () => object) => {
       stubBrowser(href)
-      const fetchMock = vi.fn(async () => Response.json(userInfo()))
+      const fetchMock = vi.fn(async (input: string | URL | Request, _init?: RequestInit) =>
+        String(input) === 'https://sso.example.com/api/kyc/status'
+          ? kycStatus()
+          : Response.json(userInfo())
+      )
       vi.stubGlobal('fetch', fetchMock)
       vi.spyOn(UserManager.prototype, 'signinCallback').mockRejectedValue(new Error('no callback'))
       vi.spyOn(UserManager.prototype, 'getUser').mockImplementation(async function (
@@ -247,6 +254,7 @@ describe('PPLEMiniApp KYC', () => {
 
     afterEach(() => {
       vi.restoreAllMocks()
+      kycStatus = () => new Response(null, { status: 404 })
     })
 
     test('returns the kyc block', async () => {
@@ -275,6 +283,105 @@ describe('PPLEMiniApp KYC', () => {
       expect(profile?.kyc).toBeUndefined()
     })
 
+    describe('KYC Status endpoint', () => {
+      const userInfoKyc = { ...kyc, status: 'pending_review', verified: false, verifiedAt: null }
+      const withUserInfoKyc = () => ({ sub: 'user-1', kyc: userInfoKyc })
+
+      test('wins over the userinfo kyc block', async () => {
+        kycStatus = () => Response.json(kyc)
+        const { miniApp } = await signedIn('https://miniapp.example.com/', withUserInfoKyc)
+
+        expect((await miniApp.getProfile())?.kyc).toEqual(kyc)
+      })
+
+      test('is read without userinfo having a kyc block', async () => {
+        kycStatus = () => Response.json(kyc)
+        const { miniApp } = await signedIn('https://miniapp.example.com/', () => ({
+          sub: 'user-1',
+        }))
+
+        expect((await miniApp.getProfile())?.kyc).toEqual(kyc)
+      })
+
+      test.each([
+        ['503', () => Response.json({ error: 'kyc_status_unavailable' }, { status: 503 })],
+        ['401', () => Response.json({ error: 'invalid_token' }, { status: 401 })],
+        ['a network error', () => Promise.reject(new TypeError('Failed to fetch'))],
+        ['a body it cannot read', () => Response.json({ status: 'something-new' })],
+        ['a body that is not JSON', () => new Response('<html>', { status: 200 })],
+      ])('falls back to the userinfo kyc block on %s', async (_name, response) => {
+        kycStatus = response
+        const { miniApp } = await signedIn('https://miniapp.example.com/', withUserInfoKyc)
+
+        const profile = await miniApp.getProfile()
+        expect(profile?.sub).toBe('user-1')
+        expect(profile?.kyc).toEqual(userInfoKyc)
+      })
+
+      test('leaves kyc undefined, and still returns the profile, when both are missing', async () => {
+        kycStatus = () => Response.json({ error: 'kyc_status_unavailable' }, { status: 503 })
+        const { miniApp } = await signedIn('https://miniapp.example.com/', () => ({
+          sub: 'user-1',
+        }))
+
+        const profile = await miniApp.getProfile()
+        expect(profile?.sub).toBe('user-1')
+        expect(profile?.kyc).toBeUndefined()
+      })
+
+      test('is requested from the oauthUrl with the access token', async () => {
+        kycStatus = () => Response.json(kyc)
+        const { miniApp, fetchMock } = await signedIn('https://miniapp.example.com/', () => ({
+          sub: 'user-1',
+        }))
+        await miniApp.getProfile()
+
+        const statusCall = fetchMock.mock.calls.find(
+          ([input]) => String(input) === 'https://sso.example.com/api/kyc/status'
+        )
+        expect(statusCall?.[1]).toEqual({ headers: { Authorization: 'Bearer access' } })
+      })
+
+      test('is requested while userinfo is still in flight', async () => {
+        const started: string[] = []
+        let releaseUserInfo: () => void = () => {}
+        const userInfoGate = new Promise<void>((resolve) => (releaseUserInfo = resolve))
+        const { miniApp, fetchMock } = await signedIn('https://miniapp.example.com/', () => ({
+          sub: 'user-1',
+        }))
+        fetchMock.mockImplementation(async (input: string | URL | Request) => {
+          started.push(String(input))
+          if (String(input) === 'https://sso.example.com/userinfo') {
+            await userInfoGate
+            return Response.json({ sub: 'user-1' })
+          }
+          return Response.json(kyc)
+        })
+
+        const profile = miniApp.refreshProfile()
+        await vi.waitFor(() =>
+          expect(started).toEqual([
+            'https://sso.example.com/userinfo',
+            'https://sso.example.com/api/kyc/status',
+          ])
+        )
+        releaseUserInfo()
+
+        expect((await profile)?.kyc).toEqual(kyc)
+      })
+
+      test('refreshProfile picks up a changed status', async () => {
+        kycStatus = () => Response.json({ ...kyc, status: 'none', verified: false })
+        const { miniApp } = await signedIn('https://miniapp.example.com/', () => ({
+          sub: 'user-1',
+        }))
+        expect((await miniApp.getProfile())?.kyc?.verified).toBe(false)
+
+        kycStatus = () => Response.json(kyc)
+        expect((await miniApp.refreshProfile())?.kyc?.verified).toBe(true)
+      })
+    })
+
     test('refreshProfile refetches userinfo', async () => {
       let status = 'none'
       const { miniApp, fetchMock } = await signedIn('https://miniapp.example.com/', () => ({
@@ -285,7 +392,7 @@ describe('PPLEMiniApp KYC', () => {
       expect((await miniApp.getProfile())?.kyc?.status).toBe('none')
       status = 'verified'
       expect((await miniApp.refreshProfile())?.kyc?.status).toBe('verified')
-      expect(fetchMock).toHaveBeenLastCalledWith('https://sso.example.com/userinfo', {
+      expect(fetchMock).toHaveBeenCalledWith('https://sso.example.com/userinfo', {
         headers: { Authorization: 'Bearer access' },
       })
     })

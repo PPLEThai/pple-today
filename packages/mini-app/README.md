@@ -22,7 +22,7 @@ const profile = await miniApp.getProfile()
 | --------------------------- | ------------------------------------------------------------------------------------------------ |
 | `init()`                    | Gets a session: from PPLE Today (launch URL or [session bridge](./BRIDGE.md)), or by signing in. |
 | `getAccessToken()`          | The access token. Inside PPLE Today it is refreshed shortly before it expires.                   |
-| `getProfile()`              | The PPLE ID userinfo, including `kyc` when PPLE ID reports it.                                   |
+| `getProfile()`              | The PPLE ID userinfo, plus `kyc` (KYC Status) when PPLE ID reports it.                           |
 | `refreshProfile()`          | Fetches the userinfo from PPLE ID again.                                                         |
 | `switchRole()`              | Lets the user switch บทบาท (see [BRIDGE.md](./BRIDGE.md#role-switching)).                        |
 | `startKyc({ returnTo? })`   | Sends the user to PPLE ID to verify their identity.                                              |
@@ -91,7 +91,7 @@ ready() // the first screen has rendered
 
 PPLE ID can verify a person once from the front of their Thai ID card, and every app
 can then rely on it. It is behind PPLE ID's `KYC_ENABLED` flag; while that is off,
-userinfo has no `kyc` block.
+`kyc` is `undefined`.
 
 ### Is the user verified?
 
@@ -107,6 +107,11 @@ profile?.kyc
 // }
 // or undefined when PPLE ID does not report KYC
 ```
+
+The SDK reads `kyc` from PPLE ID's `GET /api/kyc/status` (with the user's access token),
+in parallel with userinfo. If that request fails it falls back to a `kyc` block in
+userinfo while PPLE ID still sends one, and otherwise `kyc` is `undefined`; a failed KYC
+request never fails `getProfile()`.
 
 `kyc` never contains a name or ID number. Apps that need the verified identity get it
 server-to-server through the PPLE Platform; the SDK cannot read it.
