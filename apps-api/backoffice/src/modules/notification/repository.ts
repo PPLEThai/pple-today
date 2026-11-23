@@ -28,6 +28,8 @@ import type { CallbackTarget, PreparedInteraction } from './interaction-send'
 import type { BoundApp } from './key-binding'
 import { CreateNewExternalNotificationBody } from './models'
 
+import { canonicalLinkNameSelect } from '../mini-app/link-name'
+
 /**
  * Numbers per `COUNT` statement in `countAppInstall`. Well under Postgres's
  * 65535 bind-parameter limit, and small enough that no single statement is a
@@ -227,7 +229,13 @@ export class NotificationRepository {
           source: true,
           dailyQuota: true,
           miniApp: {
-            select: { id: true, name: true, icon: true, slug: true },
+            select: {
+              id: true,
+              name: true,
+              icon: true,
+              slug: true,
+              linkNames: canonicalLinkNameSelect,
+            },
           },
         },
       })

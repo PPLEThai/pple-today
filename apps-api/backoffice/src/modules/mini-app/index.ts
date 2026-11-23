@@ -174,9 +174,9 @@ export const MiniAppController = new Elysia({ prefix: '/mini-app', tags: ['Mini 
     },
     {
       detail: {
-        summary: 'Get Mini App by slug',
+        summary: 'Get Mini App by slug or Link Name',
         description:
-          'Describe one mini app reached by its link, listed or not, so the client knows whether it needs a session. Any Live app resolves (an unlisted one included); a Draft or Beta app only for its builders and accepted testers.',
+          'Describe one mini app reached by its link, listed or not, so the client knows whether it needs a session. The path segment may be the slug or a Link Name the app holds. Any Live app resolves (an unlisted one included); a Draft or Beta app only for its builders and accepted testers.',
       },
       params: GetMiniAppParams,
       response: {

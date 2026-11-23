@@ -134,7 +134,18 @@ describe('AdminNotificationSendService.send', () => {
     expect(options.apiKeyId).toBeUndefined()
   })
 
-  test('builds a mini-app link from the app’s slug and the path', async () => {
+  test('an app holding donate stores the path under that Link Name', async () => {
+    const { service, notificationRepository, sentRepository } = createService()
+    sentRepository.findMiniAppSlug.mockResolvedValue(
+      ok({ slug: 'brave-purple-lion', linkName: 'donate' })
+    )
+
+    await service.send(body({ link: { type: 'MINI_APP', miniAppId: 'app-1', path: '/x' } }), ADMIN)
+
+    expect(sentArgs(notificationRepository)[1].link.destination).toBe(`${ORIGIN}/donate/x`)
+  })
+
+  test('builds a mini-app link from the app’s slug and the path when it has no Link Name', async () => {
     const { service, notificationRepository, sentRepository } = createService()
 
     await service.send(

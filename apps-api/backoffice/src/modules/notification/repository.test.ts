@@ -8,6 +8,7 @@ import { NotificationRepository } from './repository'
 
 import type { CloudMessagingService } from '../../plugins/cloud-messaging'
 import type { SmsService } from '../../plugins/sms'
+import { canonicalLinkNameSelect } from '../mini-app/link-name'
 
 const BOUND_APP = {
   id: 'mini-app-id',
@@ -116,7 +117,13 @@ describe('NotificationRepository.checkApiKey', () => {
     // needed the moment the key is known to be valid. The app's *own* source is
     // deliberately absent: it answers no question on this path any more.
     expect(args.select.source).toBe(true)
-    expect(args.select.miniApp.select).toEqual({ id: true, name: true, icon: true, slug: true })
+    expect(args.select.miniApp.select).toEqual({
+      id: true,
+      name: true,
+      icon: true,
+      slug: true,
+      linkNames: canonicalLinkNameSelect,
+    })
   })
 
   test('only ever matches an active key, by hash', async () => {

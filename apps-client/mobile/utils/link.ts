@@ -11,6 +11,7 @@ import { exhaustiveGuard } from '@app/libs/exhaustive-guard'
 
 import { getMobilePathFromInAppNavigation } from './in-app-navigation-path'
 import { createMiniAppPath } from './mini-app'
+import { todayLinkUrl } from './mini-app-path'
 
 type LinkType = NonNullable<CreateNewExternalNotificationBody['content']['link']>
 
@@ -68,12 +69,12 @@ export function createLinkFromInAppNavigation(
 export function convertBannerToLink(banner: GetBannersResponse[number]) {
   switch (banner.navigation) {
     case 'MINI_APP': {
-      const url = new URL(environment.EXPO_PUBLIC_ALLOWED_MINI_APP_ORIGIN_REDIRECT)
-      url.pathname = banner.slug
-
       return {
         type: 'MINI_APP' as const,
-        destination: url.toString(),
+        destination: todayLinkUrl(
+          environment.EXPO_PUBLIC_ALLOWED_MINI_APP_ORIGIN_REDIRECT,
+          banner.todayLinkName ?? banner.slug
+        ),
       }
     }
     case 'IN_APP_NAVIGATION': {

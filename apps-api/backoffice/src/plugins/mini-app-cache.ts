@@ -1,6 +1,8 @@
 import { Prisma } from '@pple-today/database/prisma'
 import Elysia from 'elysia'
 
+import { miniAppListInclude } from '../modules/mini-app/dto'
+
 // The cache lives in each API pod's memory, and the API runs up to three
 // replicas. `invalidate()` only clears the pod that handled the write (a
 // platform retire, rename, or re-list), so every *other* pod keeps serving its
@@ -9,7 +11,7 @@ import Elysia from 'elysia'
 // is one small indexed read, so refreshing it this often costs little.
 const MINI_APP_LIST_CACHE_TTL_MS = 30 * 1000
 
-type CachedMiniApp = Prisma.MiniAppGetPayload<{ include: { miniAppRoles: true } }>
+type CachedMiniApp = Prisma.MiniAppGetPayload<{ include: typeof miniAppListInclude }>
 
 export class MiniAppListCache {
   private cache: { expiresAt: number; data: CachedMiniApp[] } | null = null

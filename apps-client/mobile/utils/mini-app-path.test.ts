@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 
-import { miniAppUrlWithPath, pathnameToMiniAppRoute } from './mini-app-path'
+import { miniAppUrlWithPath, pathnameToMiniAppRoute, todayLinkUrl } from './mini-app-path'
 
 const pathOf = (url: string) => new URL(url).pathname
 
@@ -38,6 +38,20 @@ describe('miniAppUrlWithPath', () => {
 
     expect(url.pathname).toBe('/base/page')
     expect(url.searchParams.get('theme')).toBe('dark')
+  })
+})
+
+describe('todayLinkUrl', () => {
+  const origin = 'https://miniapp.peoplesparty.or.th'
+
+  test('builds a Today Link from the Link Name', () => {
+    expect(todayLinkUrl(origin, 'donate')).toBe('https://miniapp.peoplesparty.or.th/donate')
+  })
+
+  test('builds a Today Link from the slug when that is the entry', () => {
+    expect(todayLinkUrl(origin, 'brave-purple-lion')).toBe(
+      'https://miniapp.peoplesparty.or.th/brave-purple-lion'
+    )
   })
 })
 

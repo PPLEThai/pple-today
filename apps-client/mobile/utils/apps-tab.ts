@@ -12,6 +12,11 @@ export interface ListedMiniApp {
   tier: MiniAppTier
   /** Absent on servers older than the field. */
   tagline?: string | null
+  /**
+   * Entry a Today Link is built from. Absent on servers older than the field;
+   * then the slug is the entry.
+   */
+  todayLinkName?: string | null
 }
 
 export interface PartitionedMiniApps<T extends ListedMiniApp> {
@@ -121,6 +126,20 @@ export const RECENTS_MIN_SHOWN = 4
  * Live list. The shelf shows only as many as fit its width.
  */
 export const RECENTS_STORED_LIMIT = 20
+
+/**
+ * The listed app a Today Link entry opens. The entry is the slug, or
+ * `todayLinkName` (the canonical Link Name when the app has one). A server
+ * older than `todayLinkName` is matched on the slug alone.
+ */
+export function findListedMiniAppByEntry<T extends { slug: string; todayLinkName?: string | null }>(
+  apps: readonly T[] | undefined,
+  entry: string
+): T | undefined {
+  if (!apps) return undefined
+  const normalized = entry.toLowerCase()
+  return apps.find((app) => app.slug === entry || app.todayLinkName?.toLowerCase() === normalized)
+}
 
 /** Put a just-opened app first, without duplicates, keeping at most `RECENTS_STORED_LIMIT`. */
 export function pushRecent(recents: string[], slug: string): string[] {

@@ -7,11 +7,33 @@ const REDIRECT_ORIGIN = 'https://miniapp.peoplesparty.or.th'
 const APP = { slug: 'canvassing' }
 
 describe('resolveAppLinkPath', () => {
-  test('stores the notification link under the slug, never a Link Name', () => {
-    const result = resolveAppLinkPath('/a/b', { slug: 'brave-purple-lion' }, REDIRECT_ORIGIN)
+  test('an app holding donate stores linkPath /x under that Link Name', () => {
+    const result = resolveAppLinkPath(
+      '/x',
+      { slug: 'brave-purple-lion', linkName: 'donate' },
+      REDIRECT_ORIGIN
+    )
+
+    expect(result._unsafeUnwrap().destination).toBe('https://miniapp.peoplesparty.or.th/donate/x')
+  })
+
+  test('an app with no Link Name still stores the slug form', () => {
+    const result = resolveAppLinkPath('/x', { slug: 'brave-purple-lion' }, REDIRECT_ORIGIN)
 
     expect(result._unsafeUnwrap().destination).toBe(
-      'https://miniapp.peoplesparty.or.th/brave-purple-lion/a/b'
+      'https://miniapp.peoplesparty.or.th/brave-purple-lion/x'
+    )
+  })
+
+  test('a null Link Name still stores the slug form', () => {
+    const result = resolveAppLinkPath(
+      '/x',
+      { slug: 'brave-purple-lion', linkName: null },
+      REDIRECT_ORIGIN
+    )
+
+    expect(result._unsafeUnwrap().destination).toBe(
+      'https://miniapp.peoplesparty.or.th/brave-purple-lion/x'
     )
   })
 

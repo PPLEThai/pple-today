@@ -164,9 +164,10 @@ export class AppNotificationService {
     private readonly appNotificationRepository: AppNotificationRepository,
     private readonly notificationRepository: NotificationRepository,
     /**
-     * Public origin of the mini-app redirect host. Joined with the app's slug
-     * (and optional linkPath) to form a `MINI_APP` destination the mobile
-     * client already understands. Injected so tests never boot the config graph.
+     * Public origin of the mini-app redirect host. Joined with the app's
+     * canonical Link Name, or its slug when it has none, and an optional
+     * linkPath, to form a `MINI_APP` destination the mobile client already
+     * understands. Injected so tests never boot the config graph.
      */
     private readonly miniAppRedirectOrigin: string,
     /** Injected so the quota window is testable without a fake timer. */
@@ -234,7 +235,7 @@ export class AppNotificationService {
     if (body.linkPath !== undefined) {
       const linkResult = resolveAppLinkPath(
         body.linkPath,
-        { slug: audienceInput.value.slug },
+        { slug: audienceInput.value.slug, linkName: audienceInput.value.linkName },
         this.miniAppRedirectOrigin
       )
       if (linkResult.isErr()) return err(linkResult.error)

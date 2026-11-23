@@ -36,6 +36,16 @@ export function pathnameToMiniAppRoute(pathname: string): MiniAppRoutePath | nul
  * อาสาประชาชน opens in its own tab: a second copy pushed over the feed would be
  * a separate WebView with its own session and history.
  */
+/**
+ * A public Today Link: `{origin}/{entry}`, where `entry` is the canonical Link
+ * Name when the app holds one and the slug otherwise.
+ */
+export function todayLinkUrl(origin: string, entry: string): string {
+  const url = new URL(origin)
+  url.pathname = entry
+  return url.toString()
+}
+
 export function miniAppRoute(slug: string, path?: string): MiniAppRoutePath {
   if (slug === VOLUNTEER_MINI_APP_SLUG) {
     return path ? `/volunteer?path=${path}` : '/volunteer'

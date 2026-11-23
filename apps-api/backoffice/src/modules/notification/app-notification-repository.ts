@@ -6,6 +6,8 @@ import { MiniAppInviteStatus, NotificationApiKeySource } from '@pple-today/datab
 import type { AppNotificationSendContext } from './app-audience'
 import type { KeyBinding } from './key-binding'
 
+import { canonicalLinkNameSelect, readCanonicalLinkName } from '../mini-app/link-name'
+
 /**
  * One app's spend in a quota window, with everything needed to read it: the
  * budget it is measured against and the provenance that decides whether it is
@@ -53,10 +55,10 @@ export class AppNotificationRepository {
 
   /**
    * Gather everything an audience-bound send needs for one app, in a single
-   * round trip: its slug (for self-link resolution), tier and owner, its App
-   * Users, and which of them hold an accepted invite. A missing app is a
-   * `RECORD_NOT_FOUND`, not an empty audience — a key bound to an app that no
-   * longer exists is a broken binding, not a quiet no-op.
+   * round trip: its slug and canonical Link Name (for self-link resolution),
+   * tier and owner, its App Users, and which of them hold an accepted invite.
+   * A missing app is a `RECORD_NOT_FOUND`, not an empty audience — a key bound
+   * to an app that no longer exists is a broken binding, not a quiet no-op.
    *
    * The App User registry is read whole because it *is* the audience bound; for
    * a Draft or Beta app it is a handful of rows, and for a Live app it is that
@@ -69,6 +71,7 @@ export class AppNotificationRepository {
         where: { id: miniAppId },
         select: {
           slug: true,
+          linkNames: canonicalLinkNameSelect,
           tier: true,
           ownerSub: true,
           appUsers: { select: { userId: true } },
@@ -81,6 +84,7 @@ export class AppNotificationRepository {
 
       return {
         slug: miniApp.slug,
+        linkName: readCanonicalLinkName(miniApp.linkNames),
         tier: miniApp.tier,
         ownerSub: miniApp.ownerSub,
         appUserIds: miniApp.appUsers.map((appUser) => appUser.userId),

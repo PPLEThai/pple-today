@@ -4,6 +4,8 @@ import { fromRepositoryPromise } from '@pple-today/api-common/utils'
 import { NotificationOrigin, Prisma } from '@pple-today/database/prisma'
 import { err, ok } from 'neverthrow'
 
+import { canonicalLinkNameSelect, readCanonicalLinkName } from '../../mini-app/link-name'
+
 /** The columns the history list and the detail both read. */
 const sentNotificationSelect = {
   id: true,
@@ -78,14 +80,19 @@ export class AdminSentNotificationRepository {
     private readonly fileService: FileService
   ) {}
 
-  /** The slug a `MINI_APP` link is built from, or null for an unknown or retired app. */
+  /**
+   * The slug and canonical Link Name a `MINI_APP` link is built from, or null
+   * for an unknown or retired app. Both come back in one query.
+   */
   async findMiniAppSlug(miniAppId: string) {
-    return fromRepositoryPromise(
-      this.prismaService.miniApp.findFirst({
+    return fromRepositoryPromise(async () => {
+      const miniApp = await this.prismaService.miniApp.findFirst({
         where: { id: miniAppId, retiredAt: null },
-        select: { slug: true },
+        select: { slug: true, linkNames: canonicalLinkNameSelect },
       })
-    )
+      if (!miniApp) return null
+      return { slug: miniApp.slug, linkName: readCanonicalLinkName(miniApp.linkNames) }
+    })
   }
 
   /**

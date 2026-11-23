@@ -248,9 +248,27 @@ describe('tier eligibility — listing', () => {
         url: 'https://mini.example.com',
         requiresAuth: true,
         tier: MiniAppTier.DRAFT,
+        todayLinkName: 'my-draft',
         relation: 'BUILDER',
       },
     ])
+  })
+
+  test('todayLinkName is the canonical Link Name, and the slug when there is none', () => {
+    const named = makeMiniApp({
+      slug: 'brave-purple-lion',
+      linkNames: [
+        { name: 'old-name', canonicalForId: null },
+        { name: 'donate', canonicalForId: 'mini-app-id' },
+      ],
+    })
+    const unnamed = makeMiniApp({ slug: 'canvassing' })
+
+    expect(
+      selectVisibleMiniApps([named, unnamed], makeViewer()).map((app) => app.todayLinkName)
+    ).toEqual(['donate', 'canvassing'])
+    // Replaced names are not part of the public listing.
+    expect(selectVisibleMiniApps([named], makeViewer())[0]).not.toHaveProperty('linkNames')
   })
 
   test('the listing carries the tagline', () => {
@@ -476,5 +494,32 @@ describe('lookup by slug — opening from a link', () => {
 
   test('an unknown slug resolves to nothing', () => {
     expect(selectMiniAppBySlug([makeMiniApp()], 'missing', makeViewer())).toBeNull()
+  })
+
+  test('a slug still opens the app after it is granted a Link Name', () => {
+    const named = makeMiniApp({
+      slug: 'brave-purple-lion',
+      linkNames: [{ name: 'donate', canonicalForId: 'mini-app-id' }],
+    })
+
+    expect(selectMiniAppBySlug([named], 'brave-purple-lion', makeViewer())?.slug).toBe(
+      'brave-purple-lion'
+    )
+  })
+
+  test('a canonical or replaced Link Name opens the same app', () => {
+    const named = makeMiniApp({
+      slug: 'brave-purple-lion',
+      linkNames: [
+        { name: 'donate', canonicalForId: 'mini-app-id' },
+        { name: 'giving', canonicalForId: null },
+      ],
+    })
+
+    expect(selectMiniAppBySlug([named], 'donate', makeViewer())).toMatchObject({
+      slug: 'brave-purple-lion',
+      todayLinkName: 'donate',
+    })
+    expect(selectMiniAppBySlug([named], 'giving', makeViewer())?.slug).toBe('brave-purple-lion')
   })
 })

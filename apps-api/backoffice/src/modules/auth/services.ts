@@ -69,6 +69,7 @@ export class AuthService {
     userSub: string,
     options: { path?: string; acknowledgeRoleMismatch?: boolean } = {}
   ) {
+    // The path segment of a Today Link: the slug, or a Link Name the app holds.
     const miniApp = await this.miniAppRepository.getMiniAppBySlug(slug)
 
     if (miniApp.isErr()) {

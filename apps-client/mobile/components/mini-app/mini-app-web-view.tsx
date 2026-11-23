@@ -18,6 +18,7 @@ import { MiniAppRoleSwitchDialog } from '@app/components/mini-app/role-switch-di
 import { Spinner } from '@app/components/spinner'
 import { reactQueryClient } from '@app/libs/api-client'
 import { useSession } from '@app/libs/auth'
+import { findListedMiniAppByEntry } from '@app/utils/apps-tab'
 import { miniAppUrlWithPath } from '@app/utils/mini-app'
 import { findMiniAppForUrl, hostnameOf, originOf } from '@app/utils/mini-app-bridge'
 import { hostCapabilitiesScript, hostScript } from '@app/utils/mini-app-capabilities'
@@ -113,7 +114,7 @@ export function MiniAppWebView({
     '/mini-app',
     { query: {} }
   )
-  const listedMiniApp = miniAppListData?.find((app) => app.slug === slug)
+  const listedMiniApp = findListedMiniAppByEntry(miniAppListData, slug)
   // An app reached by its link may not be in the list — an unlisted Live app is
   // listed to no one. Ask for it by slug so a public one still opens without a
   // session, for a signed-out reader too, instead of failing the exchange.

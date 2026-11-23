@@ -92,6 +92,8 @@ const createFakeAppNotificationRepository = (
     ownerSub?: string | null
     appUserIds?: string[]
     acceptedInviteUserIds?: Set<string>
+    /** Canonical Link Name, when the app holds one. */
+    linkName?: string | null
     /** Numbers the app's own App Users hold, as the repository would report. */
     appUserPhones?: Record<string, string>
   } = {}
@@ -107,6 +109,7 @@ const createFakeAppNotificationRepository = (
   let nextUsageId = 1
   const audience = {
     slug: 'canvassing',
+    linkName: overrides.linkName ?? null,
     tier: overrides.tier ?? MiniAppTier.LIVE,
     ownerSub: overrides.ownerSub === undefined ? OWNER : overrides.ownerSub,
     appUserIds: overrides.appUserIds ?? [OWNER, INVITEE, STRANGER],
@@ -859,7 +862,24 @@ describe('AppNotificationService.send', () => {
   })
 
   describe('optional linkPath self-links into this app only', () => {
-    test('linkPath “/foo” delivers a MINI_APP destination under this app’s slug', async () => {
+    test('linkPath “/x” for an app holding donate is stored under that name', async () => {
+      const repository = createFakeAppNotificationRepository({ linkName: 'donate' })
+      const { service, notificationRepository } = createService(repository)
+
+      const result = await service.send(appBoundKey(), toAll({ linkPath: '/x' }))
+
+      expect(result.isOk()).toBe(true)
+      const [, content] = notificationRepository.sendNotificationToUser.mock.calls[0]
+      expect(content).toEqual({
+        ...CONTENT,
+        link: {
+          type: 'MINI_APP',
+          destination: 'https://miniapp.peoplesparty.or.th/donate/x',
+        },
+      })
+    })
+
+    test('linkPath “/foo” delivers a MINI_APP destination under this app’s slug when it has no Link Name', async () => {
       const { service, notificationRepository } = createService()
 
       const result = await service.send(appBoundKey(), toAll({ linkPath: '/foo' }))
