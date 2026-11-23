@@ -19,6 +19,14 @@ export function buildMiniAppRedirectUrl(
   return target.toString()
 }
 
+/** Where a redirect-host request should land, once the entry resolved to an app. */
+export function miniAppRedirectLocation(requestUrl: URL, clientUrl: string): string | null {
+  const parsed = parseMiniAppRequestPath(requestUrl.pathname)
+  if (!parsed) return null
+
+  return buildMiniAppRedirectUrl(clientUrl, parsed.appPath, requestUrl.search, requestUrl.hash)
+}
+
 export function parseMiniAppRequestPath(pathname: string) {
   const segments = pathname.split('/').filter(Boolean)
 

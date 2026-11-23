@@ -8,6 +8,7 @@ import { CreateMiniAppBody, UpdateMiniAppBody } from './models'
 
 import { FileServicePlugin } from '../../../plugins/file'
 import { PrismaServicePlugin } from '../../../plugins/prisma'
+import { SLUG_CLASHES_WITH_LINK_NAME } from '../../mini-app/link-name'
 import { normalizeTagline } from '../../mini-app/tagline'
 
 export type CreateMiniAppData = Omit<CreateMiniAppBody, 'createZitadelApp' | 'clientId'> & {
@@ -102,6 +103,10 @@ export class AdminMiniAppRepository {
   }
 
   async createMiniApp(data: CreateMiniAppData) {
+    const slugClash = await this.slugClashesWithHeldLinkName(data.slug)
+    if (slugClash.isErr()) return err(slugClash.error)
+    if (slugClash.value) return err(SLUG_CLASHES_WITH_LINK_NAME)
+
     const moveFileResult = await fromRepositoryPromise(
       this.fileService.$transaction(async (fileTx) => {
         if (!data.iconFilePath) return null
@@ -151,6 +156,12 @@ export class AdminMiniAppRepository {
   }
 
   async updateMiniApp(id: string, data: UpdateMiniAppBody) {
+    if (data.slug) {
+      const slugClash = await this.slugClashesWithHeldLinkName(data.slug)
+      if (slugClash.isErr()) return err(slugClash.error)
+      if (slugClash.value) return err(SLUG_CLASHES_WITH_LINK_NAME)
+    }
+
     const existingMiniApp = await fromRepositoryPromise(
       this.prismaService.miniApp.findUniqueOrThrow({
         where: { id },
@@ -242,7 +253,8 @@ export class AdminMiniAppRepository {
     const [, fileTx] = deleteFileResult.value
 
     // App Users, invites and visibility roles reference the app with ON DELETE
-    // RESTRICT, so they go first in the same transaction. Banners, notifications
+    // RESTRICT, so they go first in the same transaction. Link Names cascade
+    // with the row. Banners, notifications
     // and notification keys are SET NULL and survive on their own. So do
     // interactive-notification answers: `NotificationResponse.miniAppId` is SET
     // NULL, the answer rows are kept, and the ones still waiting for delivery are
@@ -274,6 +286,22 @@ export class AdminMiniAppRepository {
     }
 
     return ok(deleteResult.value)
+  }
+
+  /**
+   * A slug and a held Link Name share one namespace. Checked before the write
+   * so the caller gets MINI_APP_LINK_NAME_TAKEN; the migration trigger rejects
+   * the race.
+   */
+  private async slugClashesWithHeldLinkName(slug: string) {
+    const held = await fromRepositoryPromise(
+      this.prismaService.miniAppLinkName.findUnique({
+        where: { name: slug.trim().toLowerCase() },
+        select: { name: true },
+      })
+    )
+    if (held.isErr()) return err(held.error)
+    return ok(held.value !== null)
   }
 }
 

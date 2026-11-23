@@ -1,7 +1,7 @@
 import { getLogContextPath, loggerBuilder, RequestIdPlugin } from '@pple-today/api-common/plugins'
 import Elysia from 'elysia'
 
-import { buildMiniAppRedirectUrl, parseMiniAppRequestPath } from './build-url'
+import { miniAppRedirectLocation, parseMiniAppRequestPath } from './build-url'
 import {
   buildAppleAppSiteAssociation,
   buildAssetLinks,
@@ -69,18 +69,17 @@ export const MiniAppRedirectController = new Elysia({ tags: ['Mini App Redirect'
       return status(404, 'Not Found')
     }
 
-    const miniApp = await miniAppRedirectRepository.getMiniAppBySlug(parsedPath.slug)
+    // The first segment is a slug or a Link Name. Both redirect the same way.
+    const miniApp = await miniAppRedirectRepository.getMiniAppByEntry(parsedPath.slug)
 
     if (miniApp.isErr() || !miniApp.value) {
       return status(404, 'Not Found')
     }
 
-    const location = buildMiniAppRedirectUrl(
-      miniApp.value.clientUrl,
-      parsedPath.appPath,
-      requestUrl.search,
-      requestUrl.hash
-    )
+    const location = miniAppRedirectLocation(requestUrl, miniApp.value.clientUrl)
+    if (!location) {
+      return status(404, 'Not Found')
+    }
 
     set.headers.location = location
     set.status = 301

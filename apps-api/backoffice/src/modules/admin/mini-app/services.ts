@@ -19,6 +19,7 @@ import { AD_ROLE_PREFIX, MAIN_AD_ROLE_LABELS } from '../../../constants/roles'
 import { ConfigServicePlugin } from '../../../plugins/config'
 import { MiniAppListCache, MiniAppListCachePlugin } from '../../../plugins/mini-app-cache'
 import { toMiniAppDto } from '../../mini-app/dto'
+import { linkNameTakenError } from '../../mini-app/link-name'
 import { ZitadelService, ZitadelServicePlugin } from '../zitadel/services'
 
 /** Shape of the AD role options API response (labels/values without prefix). */
@@ -69,7 +70,16 @@ export class AdminMiniAppService {
     }
 
     const createResult = await this.adminMiniAppRepository.createMiniApp({ ...data, clientId })
-    if (createResult.isErr())
+    if (createResult.isErr()) {
+      const taken = linkNameTakenError(createResult.error)
+      if (taken) {
+        return err({
+          ...taken,
+          message: data.createZitadelApp
+            ? `${taken.message}. Note: a Zitadel app was already created with clientId "${clientId}" — reuse it or clean it up in Zitadel.`
+            : taken.message,
+        })
+      }
       return mapRepositoryError(createResult.error, {
         UNIQUE_CONSTRAINT_FAILED: {
           code: InternalErrorCode.MINI_APP_SLUG_ALREADY_EXISTS,
@@ -83,6 +93,7 @@ export class AdminMiniAppService {
             }
           : {}),
       })
+    }
 
     this.miniAppListCache.invalidate()
 
@@ -119,7 +130,9 @@ export class AdminMiniAppService {
     if (editableResult.isErr()) return err(editableResult.error)
 
     const updateResult = await this.adminMiniAppRepository.updateMiniApp(id, data)
-    if (updateResult.isErr())
+    if (updateResult.isErr()) {
+      const taken = linkNameTakenError(updateResult.error)
+      if (taken) return err(taken)
       return mapRepositoryError(updateResult.error, {
         RECORD_NOT_FOUND: {
           code: InternalErrorCode.MINI_APP_NOT_FOUND,
@@ -130,6 +143,7 @@ export class AdminMiniAppService {
           message: 'Mini app with the given slug already exists',
         },
       })
+    }
 
     this.miniAppListCache.invalidate()
 

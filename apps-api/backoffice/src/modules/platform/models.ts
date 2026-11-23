@@ -2,8 +2,16 @@ import { MiniApp } from '@pple-today/api-common/dtos'
 import { MiniAppTier } from '@pple-today/database/prisma'
 import { Static, t } from 'elysia'
 
+import { LINK_NAME_MAX_LENGTH } from '../mini-app/link-name'
 import { MiniAppInvite, MiniAppInvitePhoneNumber } from '../mini-app/models'
 import { TaglineInput } from '../mini-app/tagline'
+
+const LinkNameInput = t.String({
+  minLength: 1,
+  maxLength: LINK_NAME_MAX_LENGTH,
+  description:
+    'Canonical Link Name in the Today Link. Stored lowercase. A new name demotes the previous canonical name to replaced; the replaced name stays held and keeps redirecting.',
+})
 
 export const GetMiniAppUserCountParams = t.Object({
   id: t.String({ description: 'Mini app id' }),
@@ -59,6 +67,7 @@ export const CreateMiniAppBody = t.Object({
         "Daily notification quota for the app's key. The platform owns Resource Limits, so it passes the limit it provisioned the app with; omitted falls back to the database default.",
     })
   ),
+  linkName: t.Optional(LinkNameInput),
 })
 export type CreateMiniAppBody = Static<typeof CreateMiniAppBody>
 
@@ -67,8 +76,25 @@ export type CreateMiniAppBody = Static<typeof CreateMiniAppBody>
  * OIDC `clientId` (already on `MiniApp`) and the notification key, which is shown
  * exactly once here and only ever stored hashed.
  */
-export const CreateMiniAppResponse = t.Composite([
+/**
+ * A mini app as the platform API returns it. `linkName` is the canonical Link
+ * Name, or null when the app holds none. Replaced names are not listed.
+ */
+export const PlatformMiniApp = t.Composite([
   MiniApp,
+  t.Object({
+    linkName: t.Nullable(
+      t.String({
+        description:
+          'Canonical Link Name, or null when the app has none. Replaced names stay held and keep redirecting; release one with DELETE /platform/mini-apps/:id/link-names/:name.',
+      })
+    ),
+  }),
+])
+export type PlatformMiniApp = Static<typeof PlatformMiniApp>
+
+export const CreateMiniAppResponse = t.Composite([
+  PlatformMiniApp,
   t.Object({
     notificationKey: t.String({
       description: 'App-bound notification key, shown once — store it now',
@@ -87,6 +113,7 @@ export const UpdateMiniAppBody = t.Object({
   ),
   iconUrl: t.Optional(t.String({ description: 'Public icon URL of the mini app' })),
   tagline: t.Optional(t.Nullable(TaglineInput)),
+  linkName: t.Optional(t.Nullable(LinkNameInput)),
 })
 export type UpdateMiniAppBody = Static<typeof UpdateMiniAppBody>
 
@@ -153,8 +180,21 @@ export const SetNotificationQuotaResponse = t.Object({
 })
 export type SetNotificationQuotaResponse = Static<typeof SetNotificationQuotaResponse>
 
-export const MiniAppResponse = MiniApp
+export const MiniAppResponse = PlatformMiniApp
 export type MiniAppResponse = Static<typeof MiniAppResponse>
+
+export const ReleaseLinkNameParams = t.Object({
+  id: t.String({ description: 'Mini app id' }),
+  name: t.String({
+    description: 'Held Link Name to release. Matched case-insensitively; stored lowercase.',
+  }),
+})
+export type ReleaseLinkNameParams = Static<typeof ReleaseLinkNameParams>
+
+export const ReleaseLinkNameResponse = t.Object({
+  message: t.String({ description: 'Confirmation that the held Link Name was released' }),
+})
+export type ReleaseLinkNameResponse = Static<typeof ReleaseLinkNameResponse>
 
 export const RetireMiniAppResponse = t.Object({
   message: t.String({ description: 'Confirmation message of the retirement' }),

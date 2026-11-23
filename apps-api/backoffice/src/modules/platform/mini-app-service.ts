@@ -11,7 +11,8 @@ import type {
 
 import type { MiniAppListCache } from '../../plugins/mini-app-cache'
 import type { ZitadelService } from '../admin/zitadel/services'
-import { toMiniAppDto } from '../mini-app/dto'
+import { toPlatformMiniAppDto } from '../mini-app/dto'
+import { LINK_NAME_INVALID, linkNameTakenError, normalizeLinkName } from '../mini-app/link-name'
 
 const NOT_FOUND = {
   RECORD_NOT_FOUND: {
@@ -69,6 +70,15 @@ export class PlatformMiniAppService {
    * Zitadel app to reuse or clean up — the same contract as the admin path.
    */
   async createMiniApp(data: Omit<CreatePlatformMiniAppData, 'clientId' | 'zitadelAppId'>) {
+    // Reject a Link Name the redirect host could not serve before creating the
+    // Zitadel app, so a bad name does not leave an orphaned OIDC client.
+    let linkName: string | undefined
+    if (data.linkName !== undefined) {
+      const normalized = normalizeLinkName(data.linkName)
+      if (!normalized) return err(LINK_NAME_INVALID)
+      linkName = normalized
+    }
+
     // The mini-app SDK defaults its OAuth redirect URI to the app origin, and the
     // platform's edge door adds one more on the same host — the reserved door
     // callback — so both the app's own sign-in and the door share one client.
@@ -81,16 +91,21 @@ export class PlatformMiniAppService {
 
     const createResult = await this.platformMiniAppRepository.createMiniApp({
       ...data,
+      ...(linkName !== undefined ? { linkName } : {}),
       clientId,
       zitadelAppId: appId,
     })
     if (createResult.isErr()) {
+      const orphan = ` Note: a Zitadel app was already created with clientId "${clientId}" — reuse it or clean it up in Zitadel.`
+      const taken = linkNameTakenError(createResult.error)
+      if (taken) return err({ ...taken, message: `${taken.message}.${orphan}` })
+
       return mapRepositoryError(createResult.error, {
         UNIQUE_CONSTRAINT_FAILED: {
           code: InternalErrorCode.MINI_APP_SLUG_ALREADY_EXISTS,
-          message: `Mini app with the given slug already exists. Note: a Zitadel app was already created with clientId "${clientId}" — reuse it or clean it up in Zitadel.`,
+          message: `Mini app with the given slug already exists.${orphan}`,
         },
-        INTERNAL_SERVER_ERROR: `Failed to create mini app. Note: a Zitadel app was already created with clientId "${clientId}" — reuse it or clean it up in Zitadel.`,
+        INTERNAL_SERVER_ERROR: `Failed to create mini app.${orphan}`,
       })
     }
 
@@ -98,7 +113,7 @@ export class PlatformMiniAppService {
     this.miniAppListCache.invalidate()
 
     return ok({
-      ...toMiniAppDto(createResult.value.miniApp),
+      ...toPlatformMiniAppDto(createResult.value.miniApp),
       notificationKey: createResult.value.notificationApiKey,
     })
   }
@@ -110,26 +125,37 @@ export class PlatformMiniAppService {
    * left untouched, so the OIDC app and the stored row never silently diverge.
    */
   async updateMiniApp(id: string, data: UpdatePlatformMiniAppData) {
+    let next = data
+    if (typeof data.linkName === 'string') {
+      const linkName = normalizeLinkName(data.linkName)
+      if (!linkName) return err(LINK_NAME_INVALID)
+      next = { ...data, linkName }
+    }
+
     const existingResult = await this.platformMiniAppRepository.getMiniAppById(id)
     if (existingResult.isErr()) return mapRepositoryError(existingResult.error, NOT_FOUND)
     const existing = existingResult.value
 
-    const renamed = data.name !== undefined && data.name !== existing.name
-    const moved = data.url !== undefined && data.url !== existing.clientUrl
+    const renamed = next.name !== undefined && next.name !== existing.name
+    const moved = next.url !== undefined && next.url !== existing.clientUrl
     if ((renamed || moved) && existing.zitadelAppId) {
       const zitadelResult = await this.zitadelService.updateOidcApp(existing.zitadelAppId, {
-        ...(renamed ? { name: data.name } : {}),
-        ...(moved ? { redirectUris: doorRedirectUris(data.url!) } : {}),
+        ...(renamed ? { name: next.name } : {}),
+        ...(moved ? { redirectUris: doorRedirectUris(next.url!) } : {}),
       })
       if (zitadelResult.isErr()) return err(zitadelResult.error)
     }
 
-    const updateResult = await this.platformMiniAppRepository.updateMiniApp(id, data)
-    if (updateResult.isErr()) return mapRepositoryError(updateResult.error, NOT_FOUND)
+    const updateResult = await this.platformMiniAppRepository.updateMiniApp(id, next)
+    if (updateResult.isErr()) {
+      const taken = linkNameTakenError(updateResult.error)
+      if (taken) return err(taken)
+      return mapRepositoryError(updateResult.error, NOT_FOUND)
+    }
 
     this.miniAppListCache.invalidate()
 
-    return ok(toMiniAppDto(updateResult.value))
+    return ok(toPlatformMiniAppDto(updateResult.value))
   }
 
   /**
@@ -157,7 +183,7 @@ export class PlatformMiniAppService {
 
     this.miniAppListCache.invalidate()
 
-    return ok(toMiniAppDto(result.value))
+    return ok(toPlatformMiniAppDto(result.value))
   }
 
   /** Replace the Live-tier visibility roles (empty = visible to everyone). */
@@ -171,7 +197,7 @@ export class PlatformMiniAppService {
 
     this.miniAppListCache.invalidate()
 
-    return ok(toMiniAppDto(result.value))
+    return ok(toPlatformMiniAppDto(result.value))
   }
 
   /**
@@ -189,7 +215,7 @@ export class PlatformMiniAppService {
 
     this.miniAppListCache.invalidate()
 
-    return ok(toMiniAppDto(result.value))
+    return ok(toPlatformMiniAppDto(result.value))
   }
 
   /**
@@ -236,5 +262,19 @@ export class PlatformMiniAppService {
     this.miniAppListCache.invalidate()
 
     return ok({ message: 'Mini app retired successfully' })
+  }
+
+  /**
+   * Release one held Link Name. Canonical names can also be cleared with
+   * `linkName: null` on update, which leaves replaced names in place; this
+   * removes exactly the named row, whether it is canonical or replaced.
+   */
+  async releaseLinkName(id: string, name: string) {
+    const result = await this.platformMiniAppRepository.releaseLinkName(id, name)
+    if (result.isErr()) return mapRepositoryError(result.error, NOT_FOUND)
+
+    this.miniAppListCache.invalidate()
+
+    return ok(result.value)
   }
 }

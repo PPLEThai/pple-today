@@ -11,6 +11,9 @@ enum MiniAppSource {
 
 model MiniApp {
   id    String  @id @default(cuid())
+  // The App Slug. Never renamed: stored notification links and the platform
+  // relay URL (`/apps/<slug>/notification-response`) are built from it. A
+  // Link Name is a second name, stored on MiniAppLinkName, not a new slug.
   slug  String  @unique
   name  String
   icon  String? // Public icon URL (legacy rows may still hold a base64 data URI)
@@ -81,6 +84,7 @@ model MiniApp {
 
   banners Banner[]
 
+  linkNames             MiniAppLinkName[]
   miniAppRoles          MiniAppRole[]
   appUsers              MiniAppUser[]
   notificationApiKeys   NotificationApiKey[]
@@ -153,4 +157,25 @@ model MiniAppRole {
   updatedAt DateTime @updatedAt
 
   @@id([role, miniAppId])
+}
+
+/// A second name in the Today Link (`donate` in miniapp.peoplesparty.or.th/donate).
+///
+/// `name` is stored lowercase and is unique across every mini-app. It must also
+/// not equal any `MiniApp.slug` (any case). Prisma cannot express a unique
+/// constraint across two tables, so that half is a trigger in the migration
+/// that created this table. `canonicalForId` is the owning mini-app id when
+/// this row is the canonical name, and null when the name was replaced and is
+/// still held. The unique column gives each mini-app at most one canonical
+/// name; Postgres treats nulls as distinct, so every replaced name can stay.
+/// Deleting the mini-app cascades these rows. Retire is a soft-delete, so it
+/// deletes them itself — a retired app's Link Name must 404, while the platform
+/// keeps its own copy of the hold.
+model MiniAppLinkName {
+  name           String  @id
+  miniAppId      String
+  miniApp        MiniApp @relation(fields: [miniAppId], references: [id], onDelete: Cascade)
+  canonicalForId String? @unique
+
+  @@index([miniAppId])
 }

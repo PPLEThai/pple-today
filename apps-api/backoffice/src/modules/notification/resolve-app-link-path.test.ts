@@ -7,6 +7,14 @@ const REDIRECT_ORIGIN = 'https://miniapp.peoplesparty.or.th'
 const APP = { slug: 'canvassing' }
 
 describe('resolveAppLinkPath', () => {
+  test('stores the notification link under the slug, never a Link Name', () => {
+    const result = resolveAppLinkPath('/a/b', { slug: 'brave-purple-lion' }, REDIRECT_ORIGIN)
+
+    expect(result._unsafeUnwrap().destination).toBe(
+      'https://miniapp.peoplesparty.or.th/brave-purple-lion/a/b'
+    )
+  })
+
   test('joins a path-only linkPath onto this app’s redirect entry', () => {
     const result = resolveAppLinkPath('/foo', APP, REDIRECT_ORIGIN)
 

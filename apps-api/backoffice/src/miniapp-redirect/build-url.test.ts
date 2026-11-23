@@ -1,6 +1,10 @@
 import { describe, expect, test } from 'vitest'
 
-import { buildMiniAppRedirectUrl, parseMiniAppRequestPath } from './build-url'
+import {
+  buildMiniAppRedirectUrl,
+  miniAppRedirectLocation,
+  parseMiniAppRequestPath,
+} from './build-url'
 
 describe('buildMiniAppRedirectUrl', () => {
   test('redirects slug path and query to client url', () => {
@@ -29,6 +33,17 @@ describe('buildMiniAppRedirectUrl', () => {
     )
 
     expect(result).toBe('https://appx.pplethai.org/main-path/nested/app-path?a=1#section')
+  })
+})
+
+describe('miniAppRedirectLocation', () => {
+  test('a Link Name carries path, query and hash the same way the slug does', () => {
+    const clientUrl = 'https://donate.ppleth.ai'
+    const byName = new URL('https://miniapp.peoplesparty.or.th/donate/a/b?x=1#h')
+    const bySlug = new URL('https://miniapp.peoplesparty.or.th/brave-purple-lion/a/b?x=1#h')
+
+    expect(miniAppRedirectLocation(byName, clientUrl)).toBe('https://donate.ppleth.ai/a/b?x=1#h')
+    expect(miniAppRedirectLocation(bySlug, clientUrl)).toBe('https://donate.ppleth.ai/a/b?x=1#h')
   })
 })
 
