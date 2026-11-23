@@ -46,6 +46,17 @@ describe('linkNameTakenError', () => {
     ).toBe(InternalErrorCode.MINI_APP_LINK_NAME_TAKEN)
   })
 
+  test('reads a P2002 naming either trigger constraint as a Link Name clash', () => {
+    for (const constraint of ['MiniAppLinkName_name_not_slug', 'MiniApp_slug_not_link_name']) {
+      expect(
+        linkNameTakenError({
+          code: 'UNIQUE_CONSTRAINT_FAILED',
+          message: `Unique constraint failed on the constraint: \`${constraint}\``,
+        })?.code
+      ).toBe(InternalErrorCode.MINI_APP_LINK_NAME_TAKEN)
+    }
+  })
+
   test('leaves a slug/slug unique failure alone', () => {
     expect(
       linkNameTakenError({

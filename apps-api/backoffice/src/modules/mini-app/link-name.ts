@@ -49,7 +49,9 @@ export function normalizeLinkName(input: string): string | null {
 /**
  * The application checks a clash before writing. The migration's triggers are
  * the backstop for a race, and they raise a unique violation whose message
- * says "link name". That message is how a constraint failure stays
+ * says "link name" or, as Prisma's P2002 reports it, names the
+ * `MiniAppLinkName_name_not_slug` / `MiniApp_slug_not_link_name` constraint.
+ * That text is how a constraint failure stays
  * `MINI_APP_LINK_NAME_TAKEN` instead of a slug/slug clash.
  */
 export function linkNameTakenError(error: { code: string; message?: string }): {
@@ -63,7 +65,7 @@ export function linkNameTakenError(error: { code: string; message?: string }): {
     }
   }
 
-  if (error.code === 'UNIQUE_CONSTRAINT_FAILED' && /link name/i.test(error.message ?? '')) {
+  if (error.code === 'UNIQUE_CONSTRAINT_FAILED' && /link[\s_]?name/i.test(error.message ?? '')) {
     return {
       code: InternalErrorCode.MINI_APP_LINK_NAME_TAKEN,
       message: LINK_NAME_ALREADY_HELD.message,
