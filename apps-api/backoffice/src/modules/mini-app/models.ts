@@ -10,7 +10,13 @@ export type MiniAppRelation = Static<typeof MiniAppRelation>
 
 export const ListedMiniApp = t.Composite([
   t.Pick(MiniApp, ['slug', 'name', 'iconUrl', 'tagline', 'order', 'url', 'requiresAuth', 'tier']),
-  t.Object({ relation: t.Optional(MiniAppRelation) }),
+  t.Object({
+    relation: t.Optional(MiniAppRelation),
+    todayLinkName: t.String({
+      description:
+        'Entry a Today Link is built from: the canonical Link Name when the app holds one, otherwise the slug. Replaced names are not listed.',
+    }),
+  }),
 ])
 export type ListedMiniApp = Static<typeof ListedMiniApp>
 
@@ -18,7 +24,9 @@ export const ListMiniAppsResponse = t.Array(ListedMiniApp)
 export type ListMiniAppsResponse = Static<typeof ListMiniAppsResponse>
 
 export const GetMiniAppParams = t.Object({
-  slug: t.String({ description: 'Slug of the mini app' }),
+  slug: t.String({
+    description: 'Slug of the mini app, or a Link Name it holds (canonical or replaced)',
+  }),
 })
 export type GetMiniAppParams = Static<typeof GetMiniAppParams>
 

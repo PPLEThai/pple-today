@@ -23,6 +23,26 @@ export const SLUG_CLASHES_WITH_LINK_NAME = {
   message: 'Slug clashes with a held Link Name',
 } as const
 
+/**
+ * The one canonical Link Name, read in the same query as the slug. Replaced
+ * names stay out: a send uses the name the app holds now.
+ */
+export const canonicalLinkNameSelect = {
+  where: { canonicalForId: { not: null } },
+  select: { name: true },
+  take: 1,
+} as const
+
+export const readCanonicalLinkName = (linkNames: readonly { name: string }[] | null | undefined) =>
+  linkNames?.[0]?.name ?? null
+
+/**
+ * The entry a new Today Link is built from. A canonical Link Name when the app
+ * holds one; otherwise the slug, which is what every link used before names.
+ */
+export const todayLinkEntry = (slug: string, linkName: string | null | undefined) =>
+  linkName && linkName.length > 0 ? linkName : slug
+
 const UNSAFE_IN_PATH_SEGMENT = /[\s/?#\\%]/
 
 function hasAsciiControl(value: string): boolean {

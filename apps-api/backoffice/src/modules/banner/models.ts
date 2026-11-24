@@ -15,7 +15,11 @@ export const GetBannersResponse = t.Array(
       t.Object({
         navigation: t.Literal(BannerNavigationType.MINI_APP),
         slug: t.String({
-          description: 'Slug of the mini app',
+          description: 'Slug of the mini app. Older clients build the Today Link from this.',
+        }),
+        todayLinkName: t.String({
+          description:
+            'Entry a Today Link is built from: the canonical Link Name when the app holds one, otherwise the slug.',
         }),
       }),
     ]),

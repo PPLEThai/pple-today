@@ -1,5 +1,6 @@
 import { MiniAppTier } from '@pple-today/database/prisma'
 
+import { todayLinkEntry } from './link-name'
 import { ListedMiniApp as ListedMiniAppSchema, MiniAppRelation } from './models'
 
 /**
@@ -28,6 +29,11 @@ export interface MiniAppForListing {
   /** A LIVE app listed to no one but still reachable by its link. */
   unlisted: boolean
   miniAppRoles: { role: string }[]
+  /**
+   * Every Link Name the app holds. Used to open a Today Link; not returned to
+   * the client. Absent on callers that only check listing.
+   */
+  linkNames?: { name: string; canonicalForId: string | null }[]
 }
 
 /**
@@ -179,6 +185,9 @@ export const resolveMiniAppRelation = (
   return undefined
 }
 
+const canonicalLinkName = (miniApp: MiniAppForListing) =>
+  miniApp.linkNames?.find((linkName) => linkName.canonicalForId !== null)?.name
+
 const toListedMiniApp = (miniApp: MiniAppForListing, viewer: MiniAppViewer): ListedMiniApp => {
   const relation = resolveMiniAppRelation(miniApp, viewer)
   return {
@@ -190,6 +199,7 @@ const toListedMiniApp = (miniApp: MiniAppForListing, viewer: MiniAppViewer): Lis
     url: miniApp.clientUrl,
     requiresAuth: miniApp.requiresAuth,
     tier: miniApp.tier,
+    todayLinkName: todayLinkEntry(miniApp.slug, canonicalLinkName(miniApp)),
     ...(relation ? { relation } : {}),
   }
 }
@@ -219,13 +229,21 @@ export const selectVisibleMiniApps = (
  *   for an anonymous caller.
  * - `DRAFT` / `BETA` — only when listable to the caller, so a link reveals
  *   nothing about an app still being built.
+ *
+ * `entry` is the first segment of a Today Link: the slug, or any Link Name the
+ * app holds (canonical or replaced). The response still carries the real slug.
  */
 export const selectMiniAppBySlug = (
   miniApps: MiniAppForListing[],
-  slug: string,
+  entry: string,
   viewer: MiniAppViewer
 ): ListedMiniApp | null => {
-  const miniApp = miniApps.find((candidate) => candidate.slug === slug)
+  const normalized = entry.toLowerCase()
+  const miniApp = miniApps.find(
+    (candidate) =>
+      candidate.slug === entry ||
+      candidate.linkNames?.some((linkName) => linkName.name === normalized)
+  )
   if (!miniApp) return null
   if (miniApp.tier !== MiniAppTier.LIVE && !isMiniAppListable(miniApp, viewer)) return null
   return toListedMiniApp(miniApp, viewer)

@@ -1,11 +1,19 @@
 import { PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
+import { PrismaClientKnownRequestError } from '@pple-today/database/prisma/runtime/client'
 import Elysia from 'elysia'
 
 import { MiniAppUserRepository } from './app-user-repository'
+import { miniAppListInclude } from './dto'
 import { MiniAppInviteRepository } from './invite-repository'
 
 import { PrismaServicePlugin } from '../../plugins/prisma'
+
+const miniAppNotFound = () =>
+  new PrismaClientKnownRequestError('Mini app not found', {
+    code: 'P2025',
+    clientVersion: 'mini-app',
+  })
 
 export class MiniAppRepository {
   constructor(private readonly prismaService: PrismaService) {}
@@ -27,34 +35,40 @@ export class MiniAppRepository {
             createdAt: 'desc',
           },
         ],
-        include: {
-          miniAppRoles: true,
-        },
+        include: miniAppListInclude,
       })
     )
   }
 
   /**
-   * Load a non-retired mini app by slug for the token-exchange / first-open
-   * path. Tier and role eligibility are applied in the service layer via
-   * `isMiniAppAccessible` — the access counterpart of the listing rule — so this
-   * query does not invent a second matrix (and in particular does not treat
-   * empty roles as "public" for Draft/Beta apps).
+   * Load a non-retired mini app for the token-exchange / first-open path.
+   * `entry` is the first segment of a Today Link: the slug, matched exactly as
+   * it always has, or a Link Name the app holds. Tier and role eligibility are
+   * applied in the service layer via `isMiniAppAccessible` — the access
+   * counterpart of the listing rule — so this query does not invent a second
+   * matrix (and in particular does not treat empty roles as "public" for
+   * Draft/Beta apps).
    */
-  async getMiniAppBySlug(slug: string) {
-    return await fromRepositoryPromise(
-      this.prismaService.miniApp.findUniqueOrThrow({
-        where: {
-          slug,
-          // A retired app is soft-deleted everywhere: unreachable by slug, not
-          // just hidden from the list (its Zitadel client is gone regardless).
-          retiredAt: null,
-        },
-        include: {
-          miniAppRoles: true,
-        },
+  async getMiniAppBySlug(entry: string) {
+    return await fromRepositoryPromise(async () => {
+      const bySlug = await this.prismaService.miniApp.findUnique({
+        where: { slug: entry },
+        include: { miniAppRoles: true },
       })
-    )
+      // A retired app is soft-deleted everywhere: unreachable by slug or by a
+      // leftover name, not just hidden from the list.
+      if (bySlug) {
+        if (bySlug.retiredAt) throw miniAppNotFound()
+        return bySlug
+      }
+
+      const byName = await this.prismaService.miniAppLinkName.findUnique({
+        where: { name: entry.toLowerCase() },
+        select: { miniApp: { include: { miniAppRoles: true } } },
+      })
+      if (!byName || byName.miniApp.retiredAt) throw miniAppNotFound()
+      return byName.miniApp
+    })
   }
 
   /**

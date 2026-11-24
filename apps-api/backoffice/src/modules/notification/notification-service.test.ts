@@ -159,6 +159,7 @@ const APP_KEY = {
     name: 'Canvassing',
     icon: 'https://cdn.example/canvassing.png',
     slug: 'canvassing',
+    linkNames: [] as { name: string }[],
   },
   dailyQuota: 1000,
 }
@@ -175,7 +176,7 @@ describe('NotificationService.attributeSend', () => {
 
     const result = await service.attributeSend(CENTRAL_TEAM_KEY)
 
-    expect(result._unsafeUnwrap()).toEqual({ ...CENTRAL_TEAM_KEY, slug: null })
+    expect(result._unsafeUnwrap()).toEqual({ ...CENTRAL_TEAM_KEY, slug: null, linkName: null })
     expect(notificationRepository.checkApiKey).not.toHaveBeenCalled()
   })
 
@@ -193,6 +194,7 @@ describe('NotificationService.attributeSend', () => {
       id: LEGACY_KEY.id,
       miniApp: APP_FOR_TRAY,
       slug: 'canvassing',
+      linkName: null,
     })
 
     await service.sendExternalNotification(
@@ -209,6 +211,27 @@ describe('NotificationService.attributeSend', () => {
       { header: 'Hello', message: 'World' },
       { apiKeyId: LEGACY_KEY.id, app: APP_FOR_TRAY, smsFallbackText: 'Hello' }
     )
+  })
+
+  test('an app key holding donate supplies that Link Name', async () => {
+    const { service, notificationRepository } = createService(null)
+    notificationRepository.checkApiKey.mockImplementation(async () =>
+      ok({
+        ...APP_KEY,
+        miniApp: {
+          ...APP_KEY.miniApp,
+          slug: 'brave-purple-lion',
+          linkNames: [{ name: 'donate' }],
+        },
+      })
+    )
+
+    const attributed = await service.attributeSend(LEGACY_KEY, 'app-key')
+
+    expect(attributed._unsafeUnwrap()).toMatchObject({
+      slug: 'brave-purple-lion',
+      linkName: 'donate',
+    })
   })
 
   test('an unknown app key is rejected', async () => {
@@ -240,7 +263,33 @@ describe('NotificationService.sendExternalNotification (mini-app path)', () => {
     },
   }
 
-  test('joins a path onto the app key’s slug', async () => {
+  test('an app holding donate stores a path under that Link Name', async () => {
+    const { service, notificationRepository } = createService()
+
+    const result = await service.sendExternalNotification(
+      {
+        audience: { type: 'BROADCAST' },
+        content: { ...content, link: { ...content.link, destination: '/x' } },
+      },
+      { id: LEGACY_KEY.id, miniApp: APP_FOR_TRAY, slug: 'brave-purple-lion', linkName: 'donate' }
+    )
+
+    expect(result.isOk()).toBe(true)
+    expect(notificationRepository.sendNotificationToUser).toHaveBeenCalledWith(
+      { type: 'BROADCAST' },
+      {
+        ...content,
+        link: {
+          type: 'MINI_APP',
+          destination: 'https://miniapp.peoplesparty.or.th/donate/x',
+          bypassNotificationCenter: true,
+        },
+      },
+      { apiKeyId: LEGACY_KEY.id, app: APP_FOR_TRAY, smsFallbackText: undefined }
+    )
+  })
+
+  test('joins a path onto the app key’s slug when it has no Link Name', async () => {
     const { service, notificationRepository } = createService()
 
     const result = await service.sendExternalNotification(
@@ -263,7 +312,7 @@ describe('NotificationService.sendExternalNotification (mini-app path)', () => {
     )
   })
 
-  test('a full mini-app URL is stored as written', async () => {
+  test('a full mini-app URL is stored as written, even after a Link Name is granted', async () => {
     const { service, notificationRepository } = createService()
     const linked = {
       ...content,
@@ -275,7 +324,7 @@ describe('NotificationService.sendExternalNotification (mini-app path)', () => {
 
     await service.sendExternalNotification(
       { audience: { type: 'BROADCAST' }, content: linked },
-      { id: LEGACY_KEY.id, miniApp: null, slug: 'canvassing' }
+      { id: LEGACY_KEY.id, miniApp: null, slug: 'canvassing', linkName: 'donate' }
     )
 
     const [, sent] = notificationRepository.sendNotificationToUser.mock.calls[0]

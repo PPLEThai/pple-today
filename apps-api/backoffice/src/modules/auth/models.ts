@@ -31,7 +31,9 @@ export type GetAuthMeHeaders = Static<typeof GetAuthMeHeaders>
 export type GetAuthMeResponse = Static<typeof GetAuthMeResponse>
 
 export const CreateMiniAppTokenParams = t.Object({
-  slug: t.String({ description: 'The slug of the mini app' }),
+  slug: t.String({
+    description: 'The slug of the mini app, or a Link Name it holds (canonical or replaced)',
+  }),
 })
 export type CreateMiniAppTokenParams = Static<typeof CreateMiniAppTokenParams>
 

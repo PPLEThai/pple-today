@@ -7,6 +7,7 @@ import {
   monogramLetter,
   normalizeSearchText,
   partitionMiniApps,
+  findListedMiniAppByEntry,
   pushRecent,
   RECENTS_STORED_LIMIT,
   searchMiniApps,
@@ -111,6 +112,20 @@ describe('recents', () => {
     expect(pushed).toHaveLength(RECENTS_STORED_LIMIT)
     expect(pushed[0]).toBe('new')
     expect(pushed).not.toContain(`app-${RECENTS_STORED_LIMIT - 1}`)
+  })
+
+  test('findListedMiniAppByEntry matches the slug or the Link Name', () => {
+    const apps = [
+      app({ slug: 'brave-purple-lion', todayLinkName: 'donate' }),
+      app({ slug: 'canvassing', todayLinkName: 'canvassing' }),
+    ]
+
+    expect(findListedMiniAppByEntry(apps, 'brave-purple-lion')?.slug).toBe('brave-purple-lion')
+    expect(findListedMiniAppByEntry(apps, 'donate')?.slug).toBe('brave-purple-lion')
+    expect(findListedMiniAppByEntry(apps, 'Donate')?.slug).toBe('brave-purple-lion')
+    expect(findListedMiniAppByEntry(apps, 'canvassing')?.slug).toBe('canvassing')
+    expect(findListedMiniAppByEntry(apps, 'missing')).toBeUndefined()
+    expect(findListedMiniAppByEntry(undefined, 'donate')).toBeUndefined()
   })
 
   test('selectRecentApps keeps order and drops apps no longer listed', () => {

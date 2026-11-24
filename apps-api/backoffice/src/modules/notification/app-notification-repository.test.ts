@@ -8,6 +8,8 @@ import { afterEach, describe, expect, test, vi } from 'vitest'
 
 import { AppNotificationRepository } from './app-notification-repository'
 
+import { canonicalLinkNameSelect } from '../mini-app/link-name'
+
 const SINCE = new Date('2026-07-18T17:00:00.000Z')
 const BODY = { audience: { type: 'APP_USERS', miniAppId: 'app-1' } }
 
@@ -37,6 +39,7 @@ const createPrismaService = () => {
       miniApp: {
         findUniqueOrThrow: vi.fn().mockResolvedValue({
           slug: 'canvassing',
+          linkNames: [],
           tier: MiniAppTier.BETA,
           ownerSub: 'owner-sub',
           appUsers: [{ userId: 'owner-sub' }, { userId: 'invitee-sub' }],
@@ -98,6 +101,10 @@ describe('AppNotificationRepository.getAudienceInput', () => {
       status: MiniAppInviteStatus.ACCEPTED,
       userId: { not: null },
     })
+    // The canonical name rides the same query as the slug, so a send does not
+    // look the app up again per recipient.
+    expect(args.select.slug).toBe(true)
+    expect(args.select.linkNames).toEqual(canonicalLinkNameSelect)
   })
 
   test('shapes the row into the audience rule’s input', async () => {
@@ -108,10 +115,31 @@ describe('AppNotificationRepository.getAudienceInput', () => {
 
     expect(result._unsafeUnwrap()).toEqual({
       slug: 'canvassing',
+      linkName: null,
       tier: MiniAppTier.BETA,
       ownerSub: 'owner-sub',
       appUserIds: ['owner-sub', 'invitee-sub'],
       acceptedInviteUserIds: new Set(['invitee-sub']),
+    })
+  })
+
+  test('a canonical Link Name comes back with the slug', async () => {
+    const { prismaService } = createPrismaService()
+    prismaService.miniApp.findUniqueOrThrow.mockResolvedValue({
+      slug: 'brave-purple-lion',
+      linkNames: [{ name: 'donate' }],
+      tier: MiniAppTier.LIVE,
+      ownerSub: 'owner-sub',
+      appUsers: [],
+      invites: [],
+    })
+    const repository = new AppNotificationRepository(prismaService)
+
+    const result = await repository.getAudienceInput('app-1')
+
+    expect(result._unsafeUnwrap()).toMatchObject({
+      slug: 'brave-purple-lion',
+      linkName: 'donate',
     })
   })
 

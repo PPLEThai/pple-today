@@ -13,6 +13,18 @@ export const miniAppResponseInclude = {
   },
 } satisfies Prisma.MiniAppInclude
 
+/**
+ * The catalogue the phone lists and opens from. Every held Link Name is loaded
+ * so a Today Link — canonical or replaced — still finds the app. The public
+ * DTO keeps only `todayLinkName` (canonical, or the slug).
+ */
+export const miniAppListInclude = {
+  miniAppRoles: true,
+  linkNames: {
+    select: { name: true, canonicalForId: true },
+  },
+} as const satisfies Prisma.MiniAppInclude
+
 type MiniAppWithRoles = MiniAppModel & { miniAppRoles: MiniAppRole[] }
 
 /**

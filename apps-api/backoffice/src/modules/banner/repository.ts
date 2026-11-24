@@ -18,7 +18,15 @@ export class BannerRepository {
           order: 'asc',
         },
         include: {
-          miniApp: true,
+          miniApp: {
+            include: {
+              linkNames: {
+                where: { canonicalForId: { not: null } },
+                select: { name: true },
+                take: 1,
+              },
+            },
+          },
         },
       })
     )

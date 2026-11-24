@@ -135,7 +135,7 @@ export const SendExternalNotificationHeader = t.Composite([
     'x-notification-app-key': t.Optional(
       t.String({
         description:
-          "The app's own notification API key. When present it must be active and bound to a mini app, and that app is shown as the sender. Its slug completes a path-only MINI_APP destination such as `/approval/123`. The bearer token stays the admin key that authorizes the send. Omitted, a bound admin key's own app is shown, and an unbound admin key sends as PPLE Today.",
+          "The app's own notification API key. When present it must be active and bound to a mini app, and that app is shown as the sender. Its canonical Link Name, or its slug when it has none, completes a path-only MINI_APP destination such as `/approval/123`. The bearer token stays the admin key that authorizes the send. Omitted, a bound admin key's own app is shown, and an unbound admin key sends as PPLE Today.",
       })
     ),
   }),
@@ -277,7 +277,7 @@ export const CreateAppNotificationBody = t.Object({
   linkPath: t.Optional(
     t.String({
       description:
-        'Path-only deep link into this app (must start with `/`). Resolved server-side against the key’s bound mini app; absolute URLs and cross-app targets are rejected.',
+        'Path-only deep link into this app (must start with `/`). Resolved server-side against the key’s bound mini app and stored under its canonical Link Name, or its slug when it has none. Absolute URLs and cross-app targets are rejected.',
     })
   ),
   interaction: t.Optional(NotificationInteractionSpec),

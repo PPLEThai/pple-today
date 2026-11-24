@@ -46,9 +46,10 @@ export class MiniAppService {
   }
 
   /**
-   * One app by slug, for a caller who has its link but may not see it listed
-   * (an unlisted Live app). See `selectMiniAppBySlug` for which apps resolve —
-   * roles play no part there, so none are resolved.
+   * One app by Today Link entry, for a caller who has its link but may not see
+   * it listed (an unlisted Live app). The entry is the slug or a held Link
+   * Name. See `selectMiniAppBySlug` for which apps resolve — roles play no
+   * part there, so none are resolved.
    */
   async getMiniAppBySlug(slug: string, userSub: string | null) {
     const context = await this.loadEligibilityContext([], userSub)

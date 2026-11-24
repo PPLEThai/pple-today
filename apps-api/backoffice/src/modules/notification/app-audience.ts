@@ -21,6 +21,8 @@ export interface AppNotificationAudienceInput {
  */
 export type AppNotificationSendContext = AppNotificationAudienceInput & {
   slug: string
+  /** Canonical Link Name, or null when the app holds none. */
+  linkName: string | null
 }
 
 /**

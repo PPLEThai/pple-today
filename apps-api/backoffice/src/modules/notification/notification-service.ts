@@ -41,8 +41,10 @@ export class NotificationService {
     private readonly notificationRepository: NotificationRepository,
     /**
      * Public origin of the mini-app redirect host. A path destination on a raw
-     * send is joined to `{origin}/{slug}` before it is stored, so the phone
-     * opens the same URL an app-bound `linkPath` produces.
+     * send is joined to `{origin}/{linkName}` when the app holds a canonical
+     * Link Name, and `{origin}/{slug}` otherwise, before it is stored. The
+     * phone opens the same URL an app-bound `linkPath` produces. A destination
+     * that is already a full URL is stored as written.
      */
     private readonly miniAppRedirectOrigin: string,
     private readonly options: {
@@ -306,13 +308,13 @@ export class NotificationService {
    * reached does not change — the audience is still whatever the body names.
    *
    * No app key keeps today's rule: a bound admin key shows its own app, and an
-   * unbound one sends as PPLE Today. `slug` is set only from the app key,
-   * because a path destination such as `/approval/123` is completed with that
-   * slug and must not silently use a different app.
+   * unbound one sends as PPLE Today. The Today Link entry is set only from the
+   * app key, because a path destination such as `/approval/123` is completed
+   * with that app and must not silently use a different one.
    */
   async attributeSend(adminKey: { id: string; miniApp: BoundApp | null }, appKeyToken?: string) {
     const presented = appKeyToken?.trim()
-    if (!presented) return ok({ ...adminKey, slug: null })
+    if (!presented) return ok({ ...adminKey, slug: null, linkName: null })
 
     const appKey = await this.checkApiToken(presented)
     if (appKey.isErr()) return err(appKey.error)
@@ -330,9 +332,14 @@ export class NotificationService {
       })
     }
 
-    const { id, name, icon, slug } = appKey.value.miniApp
+    const { id, name, icon, slug, linkNames } = appKey.value.miniApp
 
-    return ok({ id: adminKey.id, miniApp: { id, name, icon }, slug })
+    return ok({
+      id: adminKey.id,
+      miniApp: { id, name, icon },
+      slug,
+      linkName: linkNames[0]?.name ?? null,
+    })
   }
 
   /**
@@ -344,9 +351,17 @@ export class NotificationService {
    */
   async sendExternalNotification(
     data: CreateNewExternalNotificationBody,
-    key: { id: string; miniApp: BoundApp | null; slug?: string | null }
+    key: {
+      id: string
+      miniApp: BoundApp | null
+      slug?: string | null
+      linkName?: string | null
+    }
   ) {
-    const content = this.resolveMiniAppPath(data.content, key.slug ?? null)
+    const content = this.resolveMiniAppPath(data.content, {
+      slug: key.slug ?? null,
+      linkName: key.linkName,
+    })
     if (content.isErr()) return err(content.error)
 
     // The attributed app is the one that gets called back, so an unbound key
@@ -392,12 +407,14 @@ export class NotificationService {
 
   /**
    * A `MINI_APP` destination that is only a path (`/approval/123`) is completed
-   * with the app key's slug. The stored link is the full redirect URL the
-   * phone already understands. A full URL is left as the caller wrote it.
+   * with the app key's canonical Link Name, or its slug when it has none. The
+   * stored link is the full redirect URL the phone already understands. A full
+   * URL is left as the caller wrote it, so a link stored before the name was
+   * granted is not rewritten.
    */
   private resolveMiniAppPath(
     content: CreateNewExternalNotificationBody['content'],
-    slug: string | null
+    app: { slug: string | null; linkName?: string | null }
   ) {
     const link = content.link
     if (!link || link.type !== 'MINI_APP') return ok(content)
@@ -405,15 +422,19 @@ export class NotificationService {
     const destination = link.destination
     if (!destination.startsWith('/') || destination.startsWith('//')) return ok(content)
 
-    if (!slug) {
+    if (!app.slug) {
       return err({
         code: InternalErrorCode.NOTIFICATION_INVALID_LINK_PATH,
         message:
-          'A path destination such as /approval/123 needs the app key in x-notification-app-key. The slug is taken from that key.',
+          'A path destination such as /approval/123 needs the app key in x-notification-app-key. The Today Link entry is taken from that app.',
       })
     }
 
-    const resolved = resolveAppLinkPath(destination, { slug }, this.miniAppRedirectOrigin)
+    const resolved = resolveAppLinkPath(
+      destination,
+      { slug: app.slug, linkName: app.linkName },
+      this.miniAppRedirectOrigin
+    )
     if (resolved.isErr()) return err(resolved.error)
 
     return ok({
