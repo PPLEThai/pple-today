@@ -177,11 +177,11 @@ PPLE Today tells a page what it offers. Before the page's own scripts, in the **
 ```ts
 window.__ppleHost = {
   version: 1,
-  capabilities: { saveFile: 1, haptics: 1, ready: 1 }, // name → version
+  capabilities: { saveFile: 1, haptics: 1, openExternal: 1, ready: 1 }, // name → version
 }
 ```
 
-- It lists only what **this page** may use. `saveFile` and `haptics` are listed only when the page
+- It lists only what **this page** may use. `saveFile`, `haptics` and `openExternal` are listed only when the page
   is `https` on a trusted domain: `peoplesparty.or.th`, `pplethai.org` or `ppleth.ai`, or a
   subdomain of them. Matching is on the host name, so `evilpplethai.org` and
   `pplethai.org.evil.com` do not match. `ready` is listed on every page.
@@ -199,7 +199,7 @@ In the SDK:
 ```ts
 import { getHostCapabilities, hasCapability } from '@pplethai/pple-today-miniapp-sdk'
 
-getHostCapabilities() // { saveFile: 1, haptics: 1, ready: 1 }; {} outside PPLE Today
+getHostCapabilities() // { saveFile: 1, haptics: 1, openExternal: 1, ready: 1 }; {} outside PPLE Today
 hasCapability('haptics') // true when listed at version 1 or newer
 hasCapability('saveFile', 2) // a newer version of the protocol
 ```
@@ -366,6 +366,83 @@ Host rules:
 
 The SDK sends it only when `hasCapability('haptics')`. There is no browser fallback
 (`navigator.vibrate` is a poor match, and iOS has none), so in a browser it does nothing.
+
+## Opening a URL in the system browser
+
+`openExternal(url)` asks PPLE Today to open a URL outside the app: in Safari or Chrome, or in the
+app that claims the link (a meeting app, the phone app for `tel:`). A third-party service then gets
+its own cookies, login, camera and microphone, and the user switches back to PPLE Today as to any
+other app.
+
+```ts
+// page → host
+type OpenExternalRequest = {
+  type: 'pple:open-external-request'
+  version: 1
+  requestId: string
+  url: string // absolute: the SDK resolves a relative URL against the page
+}
+
+// host → page: sent immediately on receipt
+type OpenExternalAck = { type: 'pple:open-external-ack'; requestId: string }
+
+// host → page: once the system has taken the URL, or at once when the host will not open it
+type OpenExternalResponse =
+  | { type: 'pple:open-external-response'; requestId: string; status: 'opened' }
+  | {
+      type: 'pple:open-external-response'
+      requestId: string
+      status: 'denied'
+      reason: 'invalid-url' | 'not-allowed' | 'unsupported' | 'busy' | 'error'
+    }
+```
+
+The SDK waits up to **3 s for the ack**. After the ack there is **no timeout**: the answer comes
+once the system has opened the URL, and the page may only see it when the user comes back to PPLE
+Today. With the `openExternal` capability listed there is **no browser fallback**, so the URL never
+opens twice. A reason the SDK does not know reads as `error`.
+
+Host rules:
+
+1. It takes the origin from `event.nativeEvent.url`, as for a session. A page with no web origin
+   gets no ack. Only the main frame's page may ask; a request from another origin (an iframe) is
+   ignored, with no ack.
+2. Past that it always answers: an ack, then `opened` or `denied`.
+3. Only a page that is `https` on the trusted domains (see [Capabilities](#capabilities)) may open
+   a URL; any other is denied (`not-allowed`).
+4. It opens `https:`, `mailto:` and `tel:` URLs of up to 8,192 characters, and no `https:` URL with
+   a user name or password in it. Anything else is denied (`invalid-url`). The SDK checks the same
+   before it asks.
+5. It opens one URL at a time, and none in the 1 s after one was opened; a request then is denied
+   (`busy`), so a page cannot loop the browser.
+6. It opens the URL with the system (`Linking.openURL`), which picks the browser or the app that
+   claims the link. If nothing on the device takes it (`tel:` on an iPad without calling, no mail
+   app), it is denied (`unsupported`).
+
+Without the capability (a browser, an older PPLE Today, a page off the trusted domains),
+`openExternal()` calls `window.open(url, '_blank', 'noopener')` for an `https:` URL and navigates to
+a `mailto:` or `tel:` URL, and resolves `opened`. What that does inside an older PPLE Today is below.
+
+### Links that leave the page
+
+What PPLE Today's WebView does with a link, without the SDK (react-native-webview 16, no
+`onOpenWindow` or `onShouldStartLoadWithRequest` set by the host):
+
+| Link                                              | iOS                                                                                  | Android                   |
+| ------------------------------------------------- | ------------------------------------------------------------------------------------ | ------------------------- |
+| `<a href>` to another `http(s)` page, any origin  | Loads in the mini app's WebView. The top bar names the new site.                     | The same.                 |
+| `<a target="_blank">`, `window.open()` from a tap | Loads in the mini app's WebView, replacing the page (back returns).                  | Opens the system browser. |
+| `window.open()` not from a tap (after an `await`) | Blocked.                                                                             | Blocked.                  |
+| `mailto:`, `tel:`, another app's scheme           | Not loaded. Handed to the system only if `Linking.canOpenURL` allows it (see below). | The same.                 |
+
+For a scheme other than `http(s)`, react-native-webview cancels the load and asks
+`Linking.canOpenURL` first. That answers yes only for schemes the app declares
+(`LSApplicationQueriesSchemes` on iOS, `<queries>` on Android 11 and later), and PPLE Today declares
+none, so a `mailto:` or `tel:` link cannot be relied on to open anything.
+`openExternal()` calls `Linking.openURL` directly and does not depend on it.
+
+So a plain link cannot be relied on to leave PPLE Today: on iOS it stays inside, without the
+service's own cookies. Use `openExternal()`.
 
 ## Ready signal
 

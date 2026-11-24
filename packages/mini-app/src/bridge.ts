@@ -1,6 +1,8 @@
 import {
   BridgeResponseSchema,
   BridgeSession,
+  OpenExternalResponse,
+  OpenExternalResponseSchema,
   RoleSwitchResponse,
   RoleSwitchResponseSchema,
   SaveFileResponse,
@@ -270,6 +272,32 @@ export async function requestSaveFileFromHost(file: {
 
   if (!outcome.ok) {
     console.warn(`[PPLE Mini App] Save file: ${FAILURE_WARNINGS[outcome.failure]}`)
+    return { status: 'unavailable', reason: outcome.failure }
+  }
+
+  return outcome.data
+}
+
+/**
+ * Asks the host to open `url` in the system browser. Resolves once the system
+ * has taken it, or with `unavailable` when the host does not ack within 3 s.
+ * There is no response timeout: the host answers after the system does, which
+ * may be after the user comes back to PPLE Today. Call it only when
+ * `hasCapability('openExternal')`.
+ */
+export async function requestOpenExternalFromHost(
+  url: string
+): Promise<OpenExternalResponse | { status: 'unavailable'; reason: BridgeFailure }> {
+  const outcome = await sendBridgeRequest({
+    message: { type: 'pple:open-external-request', url },
+    ackType: 'pple:open-external-ack',
+    responseType: 'pple:open-external-response',
+    parseResponse: (data) => OpenExternalResponseSchema.safeParse(data).data ?? null,
+    responseTimeoutMs: null,
+  })
+
+  if (!outcome.ok) {
+    console.warn(`[PPLE Mini App] Open external: ${FAILURE_WARNINGS[outcome.failure]}`)
     return { status: 'unavailable', reason: outcome.failure }
   }
 

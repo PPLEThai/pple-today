@@ -86,7 +86,10 @@ describe('hostScript', () => {
 
   it('lists every capability on a trusted page, frozen', () => {
     const { host } = run({})
-    expect(host).toEqual({ version: 1, capabilities: { ready: 1, saveFile: 1, haptics: 1 } })
+    expect(host).toEqual({
+      version: 1,
+      capabilities: { ready: 1, saveFile: 1, haptics: 1, openExternal: 1 },
+    })
     expect(Object.isFrozen(host)).toBe(true)
     expect(Object.isFrozen(host.capabilities)).toBe(true)
   })
@@ -122,7 +125,7 @@ describe('hostScript', () => {
   it('sets the capabilities again at page finish only when nothing has, and never holds', () => {
     const script = hostCapabilitiesScript()
     const missed = run({ script, meta: 'manual', readyState: 'complete' })
-    expect(missed.host.capabilities).toEqual({ ready: 1, saveFile: 1, haptics: 1 })
+    expect(missed.host.capabilities).toEqual({ ready: 1, saveFile: 1, haptics: 1, openExternal: 1 })
     expect(missed.posted).toEqual([])
 
     const existing = Object.freeze({ version: 1, capabilities: { ready: 1 } })

@@ -27,6 +27,7 @@ import { roleMismatchFromError } from '@app/utils/mini-app-role-gate'
 import { MiniAppSignInDialog, MiniAppSignInRequired } from './sign-in-dialog'
 import { useHaptics } from './use-haptics'
 import { useLoadingOverlay } from './use-loading-overlay'
+import { useOpenExternal } from './use-open-external'
 import { useSaveFile } from './use-save-file'
 import { type BridgeResolvedApp, useSessionBridge } from './use-session-bridge'
 import { useSignInPrompt } from './use-sign-in-prompt'
@@ -267,6 +268,8 @@ export function MiniAppWebView({
   // Haptics a page asks for, and the loading overlay a page can hold until it is ready.
   const haptics = useHaptics(mainFrameUrlRef)
   const loading = useLoadingOverlay(mainFrameUrlRef, webViewShown, launchUrl)
+  // Links to a third-party service (a meeting), opened in the system browser.
+  const openExternal = useOpenExternal(miniAppRef, mainFrameUrlRef)
   // The host script first: it lists what this page may use (window.__ppleHost).
   const injectedBeforeLoad = [hostScript(), saveFile.script, injectedBottomInset]
     .filter(Boolean)
@@ -325,7 +328,13 @@ export function MiniAppWebView({
 
   // Each handler answers true when the message was its own; the rest is the session bridge's.
   const onWebViewMessage = (event: WebViewMessageEvent) => {
-    if (saveFile.onMessage(event) || haptics.onMessage(event) || loading.onMessage(event)) return
+    if (
+      saveFile.onMessage(event) ||
+      openExternal.onMessage(event) ||
+      haptics.onMessage(event) ||
+      loading.onMessage(event)
+    )
+      return
     bridge.onMessage(event)
   }
 

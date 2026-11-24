@@ -138,3 +138,24 @@ export const SaveFileResponseSchema = z.discriminatedUnion('status', [
   }),
 ])
 export type SaveFileResponse = z.infer<typeof SaveFileResponseSchema>
+
+export const OpenExternalDeniedReasonSchema = z.enum([
+  'invalid-url',
+  'not-allowed',
+  'unsupported',
+  'busy',
+  'error',
+])
+export type OpenExternalDeniedReason = z.infer<typeof OpenExternalDeniedReasonSchema>
+
+export const OpenExternalResponseSchema = z.discriminatedUnion('status', [
+  // The system handed the URL to the browser (or the app that claims it).
+  z.object({ type: z.literal('pple:open-external-response'), status: z.literal('opened') }),
+  z.object({
+    type: z.literal('pple:open-external-response'),
+    status: z.literal('denied'),
+    // A reason this SDK does not know (a newer host) reads as `error`.
+    reason: OpenExternalDeniedReasonSchema.catch('error'),
+  }),
+])
+export type OpenExternalResponse = z.infer<typeof OpenExternalResponseSchema>

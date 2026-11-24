@@ -21,11 +21,21 @@ import {
   UserInfo,
   UserInfoSchema,
 } from './models'
+import { openExternal, OpenExternalResult } from './open-external'
 import { saveFile, SaveFileOptions, SaveFileResult } from './save-file'
 import { fetchRoleInfo, showRoleSwitchDialog, switchRoleOnServer } from './web-role-switcher'
 
-export type { HapticStyle, Kyc, KycResult, SaveFileOptions, SaveFileResult, User, UserInfo }
-export { getHostCapabilities, haptic, hasCapability, ready, saveFile }
+export type {
+  HapticStyle,
+  Kyc,
+  KycResult,
+  OpenExternalResult,
+  SaveFileOptions,
+  SaveFileResult,
+  User,
+  UserInfo,
+}
+export { getHostCapabilities, haptic, hasCapability, openExternal, ready, saveFile }
 
 /**
  * How a `switchRole()` call ended. `unavailable` covers every case where no
@@ -586,6 +596,14 @@ export class PPLEMiniApp {
    */
   saveFile(source: Blob | string, options?: SaveFileOptions): Promise<SaveFileResult> {
     return saveFile(source, options)
+  }
+
+  /**
+   * Opens a URL in the system browser, or the app that claims it. The same as
+   * the exported `openExternal()`, which needs no `init()`.
+   */
+  openExternal(url: string): Promise<OpenExternalResult> {
+    return openExternal(url)
   }
 
   /** Plays a haptic tap inside PPLE Today. The same as the exported `haptic()`, which needs no `init()`. */
