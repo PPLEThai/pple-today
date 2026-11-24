@@ -22,6 +22,8 @@ import {
   MiniAppResponse,
   RegisterMiniAppUserParams,
   RegisterMiniAppUserResponse,
+  ReleaseLinkNameParams,
+  ReleaseLinkNameResponse,
   RetireMiniAppResponse,
   SetCollaboratorsBody,
   SetCollaboratorsResponse,
@@ -62,8 +64,9 @@ const PlatformAuthGuardPlugin = new Elysia({ name: 'PlatformAuthGuardPlugin' })
  * Service-to-service API consumed by the pple-platform provisioner. Every route
  * is gated by the dedicated platform service token (see `PlatformAuthGuard`),
  * separate from admin/user auth. It drives a Builder App's whole lifecycle:
- * create (Zitadel OIDC app + Draft mini-app row + notification key), update,
- * set-tier, set-roles, and retire — plus the App User count. Every mutation
+ * create (Zitadel OIDC app + Draft mini-app row + notification key), update
+ * (including the canonical Link Name), set-tier, set-roles, and retire — plus
+ * the App User count. Every mutation
  * invalidates the mini-app list cache so effects show up in PPLE Today promptly.
  *
  * It also answers the one identity question the platform cannot answer itself:
@@ -97,6 +100,8 @@ export const PlatformController = new Elysia({ prefix: '/platform', tags: ['Plat
         ...createErrorSchema(
           InternalErrorCode.UNAUTHORIZED,
           InternalErrorCode.MINI_APP_SLUG_ALREADY_EXISTS,
+          InternalErrorCode.MINI_APP_LINK_NAME_TAKEN,
+          InternalErrorCode.MINI_APP_INVALID_INPUT,
           InternalErrorCode.ZITADEL_NOT_CONFIGURED,
           InternalErrorCode.ZITADEL_APP_CREATE_FAILED,
           InternalErrorCode.INTERNAL_SERVER_ERROR
@@ -105,7 +110,7 @@ export const PlatformController = new Elysia({ prefix: '/platform', tags: ['Plat
       detail: {
         summary: 'Create a Builder App',
         description:
-          'Create a complete app registration in one call: a Zitadel OIDC app, a DRAFT/PLATFORM mini-app row owned by the Builder, and an app-bound notification key. Returns the clientId and the notification key (shown once). The app is immediately visible to its owner as a Draft.',
+          'Create a complete app registration in one call: a Zitadel OIDC app, a DRAFT/PLATFORM mini-app row owned by the Builder, and an app-bound notification key. Returns the clientId and the notification key (shown once). The app is immediately visible to its owner as a Draft. `linkName`, when set, is the canonical Link Name; the redirect host resolves it the same way it resolves the slug. A name that matches any slug or held Link Name is refused with MINI_APP_LINK_NAME_TAKEN, as is a slug that matches a held Link Name.',
       },
     }
   )
@@ -129,6 +134,8 @@ export const PlatformController = new Elysia({ prefix: '/platform', tags: ['Plat
         ...createErrorSchema(
           InternalErrorCode.UNAUTHORIZED,
           InternalErrorCode.MINI_APP_NOT_FOUND,
+          InternalErrorCode.MINI_APP_LINK_NAME_TAKEN,
+          InternalErrorCode.MINI_APP_INVALID_INPUT,
           InternalErrorCode.ZITADEL_NOT_CONFIGURED,
           InternalErrorCode.ZITADEL_APP_NOT_FOUND,
           InternalErrorCode.ZITADEL_REQUEST_FAILED,
@@ -138,7 +145,36 @@ export const PlatformController = new Elysia({ prefix: '/platform', tags: ['Plat
       detail: {
         summary: 'Update a Builder App',
         description:
-          'Update presentation fields (name/icon/url). Changing the URL re-syncs the Zitadel redirect URIs.',
+          'Update presentation fields (name/icon/url). Changing the URL re-syncs the Zitadel redirect URIs. `linkName` sets the canonical Link Name and demotes the previous one to replaced (still held, still redirecting). `linkName: null` releases the canonical name only. Omit the field to leave held names untouched. A clash with a slug or another app’s held name is MINI_APP_LINK_NAME_TAKEN.',
+      },
+    }
+  )
+  .delete(
+    '/mini-apps/:id/link-names/:name',
+    async ({ params, status, platformMiniAppService }) => {
+      const result = await platformMiniAppService.releaseLinkName(params.id, params.name)
+
+      if (result.isErr()) {
+        return mapErrorCodeToResponse(result.error, status)
+      }
+
+      return status(200, result.value)
+    },
+    {
+      requiredPlatformService: true,
+      params: ReleaseLinkNameParams,
+      response: {
+        200: ReleaseLinkNameResponse,
+        ...createErrorSchema(
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.MINI_APP_NOT_FOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Release a held Link Name',
+        description:
+          'Release one Link Name this app holds, canonical or replaced. The name stops redirecting. Releasing the canonical name does not promote a replaced one; the response linkName on a later read is null until a new canonical name is set. A name this app does not hold is not-found. Requires the platform service token.',
       },
     }
   )

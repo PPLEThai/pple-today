@@ -75,6 +75,7 @@ export const AdminMiniAppController = new Elysia({
         201: CreateMiniAppResponse,
         ...createErrorSchema(
           InternalErrorCode.MINI_APP_SLUG_ALREADY_EXISTS,
+          InternalErrorCode.MINI_APP_LINK_NAME_TAKEN,
           InternalErrorCode.MINI_APP_CLIENT_ID_REQUIRED,
           InternalErrorCode.ZITADEL_NOT_CONFIGURED,
           InternalErrorCode.ZITADEL_APP_CREATE_FAILED,
@@ -243,6 +244,7 @@ export const AdminMiniAppController = new Elysia({
         ...createErrorSchema(
           InternalErrorCode.MINI_APP_NOT_FOUND,
           InternalErrorCode.MINI_APP_SLUG_ALREADY_EXISTS,
+          InternalErrorCode.MINI_APP_LINK_NAME_TAKEN,
           InternalErrorCode.MINI_APP_PLATFORM_MANAGED,
           InternalErrorCode.FILE_MOVE_ERROR,
           InternalErrorCode.FILE_CHANGE_PERMISSION_ERROR,

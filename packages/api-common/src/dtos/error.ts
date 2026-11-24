@@ -346,6 +346,11 @@ const MINI_APP_ERROR_SCHEMA = {
   MINI_APP_SLUG_ALREADY_EXISTS: {
     status: 409,
   },
+  // A Link Name collided with a mini-app slug or another held Link Name, or a
+  // new slug collided with a held Link Name. Distinct from a slug/slug clash.
+  MINI_APP_LINK_NAME_TAKEN: {
+    status: 409,
+  },
   MINI_APP_CLIENT_ID_REQUIRED: {
     status: 400,
   },

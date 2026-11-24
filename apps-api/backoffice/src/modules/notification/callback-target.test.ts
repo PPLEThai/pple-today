@@ -135,6 +135,12 @@ describe('buildPlatformRelayUrl', () => {
       'https://relay.example/apps/leave-request/notification-response'
     )
   })
+
+  test('stays on the slug, which a Link Name does not replace', () => {
+    expect(buildPlatformRelayUrl('https://relay.example', 'brave-purple-lion')).toBe(
+      'https://relay.example/apps/brave-purple-lion/notification-response'
+    )
+  })
 })
 
 describe('resolveCallbackTarget', () => {

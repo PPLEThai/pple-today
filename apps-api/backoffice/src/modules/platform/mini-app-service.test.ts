@@ -19,8 +19,10 @@ import type { ZitadelService } from '../admin/zitadel/services'
  * test states only the fields it cares about.
  */
 const makeRow = (
-  overrides: Partial<MiniAppModel & { miniAppRoles: MiniAppRole[] }> = {}
-): MiniAppModel & { miniAppRoles: MiniAppRole[] } =>
+  overrides: Partial<
+    MiniAppModel & { miniAppRoles: MiniAppRole[]; linkNames: { name: string }[] }
+  > = {}
+): MiniAppModel & { miniAppRoles: MiniAppRole[]; linkNames: { name: string }[] } =>
   ({
     id: 'app-1',
     slug: 'my-app',
@@ -42,8 +44,9 @@ const makeRow = (
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-01'),
     miniAppRoles: [],
+    linkNames: [],
     ...overrides,
-  }) as MiniAppModel & { miniAppRoles: MiniAppRole[] }
+  }) as MiniAppModel & { miniAppRoles: MiniAppRole[]; linkNames: { name: string }[] }
 
 const createFakeRepository = () => ({
   createMiniApp: vi.fn(),
@@ -54,6 +57,7 @@ const createFakeRepository = () => ({
   setUnlisted: vi.fn(),
   setCollaborators: vi.fn(),
   retire: vi.fn(),
+  releaseLinkName: vi.fn(),
 })
 
 const createFakeZitadel = () => ({
@@ -123,8 +127,77 @@ describe('PlatformMiniAppService.createMiniApp', () => {
     expect(value.clientId).toBe('client-1')
     expect(value.notificationKey).toBe('pple_notification_abc123')
     expect(value.tier).toBe(MiniAppTier.DRAFT)
+    expect(value.linkName).toBeNull()
     // Owner sees their Draft immediately.
     expect(cache.invalidate).toHaveBeenCalledOnce()
+  })
+
+  test('stores a Link Name in lowercase and returns it as the canonical name', async () => {
+    const { service, repository, zitadel } = makeService()
+    zitadel.createOidcApp.mockResolvedValue(
+      ok({ appId: 'zitadel-app-1', clientId: 'client-1', clientSecret: null })
+    )
+    repository.createMiniApp.mockResolvedValue(
+      ok({
+        miniApp: makeRow({ linkNames: [{ name: 'donate' }] }),
+        notificationApiKey: 'pple_notification_abc123',
+      })
+    )
+
+    const result = await service.createMiniApp({ ...CREATE_INPUT, linkName: 'Donate' })
+
+    expect(repository.createMiniApp).toHaveBeenCalledWith(
+      expect.objectContaining({ linkName: 'donate' })
+    )
+    expect(result._unsafeUnwrap().linkName).toBe('donate')
+  })
+
+  test('rejects a Link Name the redirect host could not serve before creating a Zitadel app', async () => {
+    const { service, repository, zitadel } = makeService()
+
+    const result = await service.createMiniApp({ ...CREATE_INPUT, linkName: 'bad name' })
+
+    expect(result._unsafeUnwrapErr().code).toBe(InternalErrorCode.MINI_APP_INVALID_INPUT)
+    expect(zitadel.createOidcApp).not.toHaveBeenCalled()
+    expect(repository.createMiniApp).not.toHaveBeenCalled()
+  })
+
+  test('maps a Link Name clash, including a slug that matches a held name, and names the orphaned client', async () => {
+    const { service, repository, zitadel, cache } = makeService()
+    zitadel.createOidcApp.mockResolvedValue(
+      ok({ appId: 'zitadel-app-1', clientId: 'client-1', clientSecret: null })
+    )
+    repository.createMiniApp.mockResolvedValue(
+      err({
+        code: InternalErrorCode.MINI_APP_LINK_NAME_TAKEN,
+        message: 'Slug clashes with a held Link Name',
+      })
+    )
+
+    const result = await service.createMiniApp(CREATE_INPUT)
+
+    const error = result._unsafeUnwrapErr()
+    expect(error.code).toBe(InternalErrorCode.MINI_APP_LINK_NAME_TAKEN)
+    expect(error.message).toContain('Slug clashes with a held Link Name')
+    expect(error.message).toContain('client-1')
+    expect(cache.invalidate).not.toHaveBeenCalled()
+  })
+
+  test('reads the database trigger backstop as a Link Name clash, not a duplicate slug', async () => {
+    const { service, repository, zitadel } = makeService()
+    zitadel.createOidcApp.mockResolvedValue(
+      ok({ appId: 'zitadel-app-1', clientId: 'client-1', clientSecret: null })
+    )
+    repository.createMiniApp.mockResolvedValue(
+      err({
+        code: 'UNIQUE_CONSTRAINT_FAILED',
+        message: 'link name clashes with a mini-app slug',
+      })
+    )
+
+    const result = await service.createMiniApp({ ...CREATE_INPUT, linkName: 'donate' })
+
+    expect(result._unsafeUnwrapErr().code).toBe(InternalErrorCode.MINI_APP_LINK_NAME_TAKEN)
   })
 
   test('short-circuits when the Zitadel app cannot be created — nothing is persisted', async () => {
@@ -247,6 +320,46 @@ describe('PlatformMiniAppService.updateMiniApp', () => {
 
     expect(result._unsafeUnwrapErr().code).toBe(InternalErrorCode.ZITADEL_REQUEST_FAILED)
     expect(repository.updateMiniApp).not.toHaveBeenCalled()
+    expect(cache.invalidate).not.toHaveBeenCalled()
+  })
+
+  test('lowercases a new canonical name and returns it', async () => {
+    const { service, repository, zitadel } = makeService()
+    repository.getMiniAppById.mockResolvedValue(ok(makeRow()))
+    repository.updateMiniApp.mockResolvedValue(ok(makeRow({ linkNames: [{ name: 'donate' }] })))
+
+    const result = await service.updateMiniApp('app-1', { linkName: 'Donate' })
+
+    expect(zitadel.updateOidcApp).not.toHaveBeenCalled()
+    expect(repository.updateMiniApp).toHaveBeenCalledWith('app-1', { linkName: 'donate' })
+    expect(result._unsafeUnwrap().linkName).toBe('donate')
+  })
+
+  test('null releases the canonical name and leaves the response without one', async () => {
+    const { service, repository } = makeService()
+    repository.getMiniAppById.mockResolvedValue(ok(makeRow()))
+    repository.updateMiniApp.mockResolvedValue(ok(makeRow({ linkNames: [] })))
+
+    const result = await service.updateMiniApp('app-1', { linkName: null })
+
+    expect(repository.updateMiniApp).toHaveBeenCalledWith('app-1', { linkName: null })
+    expect(result._unsafeUnwrap().linkName).toBeNull()
+  })
+
+  test('rejects a Link Name that clashes with a slug or a held name, in any case', async () => {
+    const { service, repository, cache } = makeService()
+    repository.getMiniAppById.mockResolvedValue(ok(makeRow()))
+    repository.updateMiniApp.mockResolvedValue(
+      err({
+        code: InternalErrorCode.MINI_APP_LINK_NAME_TAKEN,
+        message: 'Link Name is already held',
+      })
+    )
+
+    const result = await service.updateMiniApp('app-1', { linkName: 'DONATE' })
+
+    expect(repository.updateMiniApp).toHaveBeenCalledWith('app-1', { linkName: 'donate' })
+    expect(result._unsafeUnwrapErr().code).toBe(InternalErrorCode.MINI_APP_LINK_NAME_TAKEN)
     expect(cache.invalidate).not.toHaveBeenCalled()
   })
 
@@ -460,5 +573,30 @@ describe('PlatformMiniAppService.retire', () => {
 
     expect(result._unsafeUnwrapErr().code).toBe(InternalErrorCode.MINI_APP_NOT_FOUND)
     expect(zitadel.deleteApp).not.toHaveBeenCalled()
+  })
+})
+
+describe('PlatformMiniAppService.releaseLinkName', () => {
+  test('releases a held replaced name and invalidates the list cache', async () => {
+    const { service, repository, cache } = makeService()
+    repository.releaseLinkName.mockResolvedValue(ok({ message: 'Link name released' }))
+
+    const result = await service.releaseLinkName('app-1', 'Old-Name')
+
+    expect(repository.releaseLinkName).toHaveBeenCalledWith('app-1', 'Old-Name')
+    expect(result._unsafeUnwrap()).toEqual({ message: 'Link name released' })
+    expect(cache.invalidate).toHaveBeenCalledOnce()
+  })
+
+  test('returns MINI_APP_NOT_FOUND when the app or the name is not held', async () => {
+    const { service, repository, cache } = makeService()
+    repository.releaseLinkName.mockResolvedValue(
+      err({ code: 'RECORD_NOT_FOUND', message: 'not found' })
+    )
+
+    const result = await service.releaseLinkName('missing', 'donate')
+
+    expect(result._unsafeUnwrapErr().code).toBe(InternalErrorCode.MINI_APP_NOT_FOUND)
+    expect(cache.invalidate).not.toHaveBeenCalled()
   })
 })

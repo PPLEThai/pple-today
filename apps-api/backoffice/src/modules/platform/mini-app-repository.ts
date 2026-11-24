@@ -1,3 +1,4 @@
+import { InternalErrorCode } from '@pple-today/api-common/dtos'
 import type { PrismaService } from '@pple-today/api-common/services'
 import { fromRepositoryPromise } from '@pple-today/api-common/utils'
 import {
@@ -5,12 +6,22 @@ import {
   MiniAppTier,
   NotificationApiKeySource,
   NotificationCallbackStatus,
+  Prisma,
 } from '@pple-today/database/prisma'
+import { err, ok } from 'neverthrow'
 
 import {
   generateNotificationApiKey,
   hashNotificationApiKey,
 } from '../../utils/notification-api-key'
+import { miniAppResponseInclude } from '../mini-app/dto'
+import {
+  LINK_NAME_ALREADY_HELD,
+  LINK_NAME_CLASHES_WITH_SLUG,
+  LINK_NAME_INVALID,
+  normalizeLinkName,
+  SLUG_CLASHES_WITH_LINK_NAME,
+} from '../mini-app/link-name'
 import { normalizeTagline } from '../mini-app/tagline'
 
 export interface CreatePlatformMiniAppData {
@@ -28,6 +39,8 @@ export interface CreatePlatformMiniAppData {
    * the column default.
    */
   dailyQuota?: number
+  /** Canonical Link Name. Omitted leaves the app with none. Stored lowercase. */
+  linkName?: string
 }
 
 export interface UpdatePlatformMiniAppData {
@@ -36,6 +49,42 @@ export interface UpdatePlatformMiniAppData {
   iconUrl?: string
   /** `null` clears it; `undefined` leaves it untouched. */
   tagline?: string | null
+  /**
+   * Canonical Link Name. `undefined` leaves held names untouched. `null`
+   * releases the canonical name and keeps replaced ones. A string demotes the
+   * previous canonical name to replaced — it stays held and keeps redirecting.
+   */
+  linkName?: string | null
+}
+
+type LinkNameClash = {
+  code: typeof InternalErrorCode.MINI_APP_LINK_NAME_TAKEN
+  message: string
+}
+
+/**
+ * A Link Name may not equal any slug, including this app's, and may not equal
+ * a name another app holds. A name this app already holds is not a clash: that
+ * is how a replaced name is promoted back to canonical.
+ */
+async function findLinkNameClash(
+  tx: Prisma.TransactionClient,
+  name: string,
+  owningMiniAppId?: string
+): Promise<LinkNameClash | null> {
+  const slugHit = await tx.miniApp.findFirst({
+    where: { slug: { equals: name, mode: 'insensitive' } },
+    select: { id: true },
+  })
+  if (slugHit) return LINK_NAME_CLASHES_WITH_SLUG
+
+  const held = await tx.miniAppLinkName.findUnique({
+    where: { name },
+    select: { miniAppId: true },
+  })
+  if (held && held.miniAppId !== owningMiniAppId) return LINK_NAME_ALREADY_HELD
+
+  return null
 }
 
 /**
@@ -60,10 +109,44 @@ export class PlatformMiniAppRepository {
    */
   async createMiniApp(data: CreatePlatformMiniAppData) {
     const notificationApiKey = generateNotificationApiKey()
+    let linkName: string | undefined
+    if (data.linkName !== undefined) {
+      const normalized = normalizeLinkName(data.linkName)
+      if (!normalized) return err(LINK_NAME_INVALID)
+      linkName = normalized
+    }
 
-    return await fromRepositoryPromise(
+    // Set inside the transaction, read after it commits. A clash returns before
+    // any write, so the assignment is visible and the transaction has inserted
+    // nothing. The migration trigger still rejects a race.
+    let clash: LinkNameClash | null = null
+    const created = await fromRepositoryPromise(
       this.prismaService.$transaction(async (tx) => {
-        const miniApp = await tx.miniApp.create({
+        // The slug joins the same namespace as held names.
+        const slugHeld = await tx.miniAppLinkName.findUnique({
+          where: { name: data.slug.trim().toLowerCase() },
+          select: { name: true },
+        })
+        if (slugHeld) {
+          clash = SLUG_CLASHES_WITH_LINK_NAME
+          return null
+        }
+
+        if (linkName) {
+          // The new row is not visible to the slug lookup yet, so an app cannot
+          // be given its own slug as a Link Name without this comparison.
+          if (linkName === data.slug.trim().toLowerCase()) {
+            clash = LINK_NAME_CLASHES_WITH_SLUG
+            return null
+          }
+          const nameClash = await findLinkNameClash(tx, linkName)
+          if (nameClash) {
+            clash = nameClash
+            return null
+          }
+        }
+
+        const inserted = await tx.miniApp.create({
           data: {
             name: data.name,
             slug: data.slug,
@@ -77,8 +160,17 @@ export class PlatformMiniAppRepository {
             source: MiniAppSource.PLATFORM,
             ownerSub: data.ownerSub,
           },
-          include: { miniAppRoles: true },
         })
+
+        if (linkName) {
+          await tx.miniAppLinkName.create({
+            data: {
+              name: linkName,
+              miniAppId: inserted.id,
+              canonicalForId: inserted.id,
+            },
+          })
+        }
 
         // Stamped PLATFORM explicitly rather than inherited from the app: this
         // key goes to an outside Builder, so it is the audience-scoped, metered
@@ -88,15 +180,32 @@ export class PlatformMiniAppRepository {
           data: {
             name: data.name,
             apiKey: hashNotificationApiKey(notificationApiKey),
-            miniAppId: miniApp.id,
+            miniAppId: inserted.id,
             source: NotificationApiKeySource.PLATFORM,
             dailyQuota: data.dailyQuota,
           },
         })
 
-        return { miniApp, notificationApiKey }
+        // Re-read so the canonical Link Name, written just above, is on the row.
+        const miniApp = await tx.miniApp.findUniqueOrThrow({
+          where: { id: inserted.id },
+          include: miniAppResponseInclude,
+        })
+
+        return miniApp
       })
     )
+
+    if (created.isErr()) return err(created.error)
+    if (clash) return err(clash)
+    if (!created.value) {
+      return err({
+        code: InternalErrorCode.INTERNAL_SERVER_ERROR,
+        message: 'Failed to create mini app',
+      })
+    }
+
+    return ok({ miniApp: created.value, notificationApiKey })
   }
 
   /**
@@ -116,18 +225,116 @@ export class PlatformMiniAppRepository {
 
   /** Update mutable presentation fields. Undefined fields are left untouched. */
   async updateMiniApp(id: string, data: UpdatePlatformMiniAppData) {
-    return await fromRepositoryPromise(
-      this.prismaService.miniApp.update({
-        where: { id },
-        data: {
-          name: data.name,
-          clientUrl: data.url,
-          icon: data.iconUrl,
-          tagline: normalizeTagline(data.tagline),
-        },
-        include: { miniAppRoles: true },
+    let linkName: string | null | undefined
+    if (data.linkName === undefined) linkName = undefined
+    else if (data.linkName === null) linkName = null
+    else {
+      const normalized = normalizeLinkName(data.linkName)
+      if (!normalized) return err(LINK_NAME_INVALID)
+      linkName = normalized
+    }
+
+    let clash: LinkNameClash | null = null
+    const updated = await fromRepositoryPromise(
+      this.prismaService.$transaction(async (tx) => {
+        if (typeof linkName === 'string') {
+          const nameClash = await findLinkNameClash(tx, linkName, id)
+          if (nameClash) {
+            clash = nameClash
+            return null
+          }
+
+          // Demote first. `canonicalForId` is unique, so the new canonical row
+          // cannot be written while the previous one still holds it. A replaced
+          // name of this same app is promoted in place rather than inserted.
+          await tx.miniAppLinkName.updateMany({
+            where: { miniAppId: id, canonicalForId: { not: null }, NOT: { name: linkName } },
+            data: { canonicalForId: null },
+          })
+          const held = await tx.miniAppLinkName.findUnique({
+            where: { name: linkName },
+            select: { miniAppId: true },
+          })
+          if (held) {
+            await tx.miniAppLinkName.update({
+              where: { name: linkName },
+              data: { canonicalForId: id },
+            })
+          } else {
+            await tx.miniAppLinkName.create({
+              data: { name: linkName, miniAppId: id, canonicalForId: id },
+            })
+          }
+        } else if (linkName === null) {
+          // Releasing the canonical name does not release replaced ones. Those
+          // stay held, and keep redirecting, until the platform deletes them.
+          await tx.miniAppLinkName.deleteMany({
+            where: { miniAppId: id, canonicalForId: { not: null } },
+          })
+        }
+
+        const miniApp = await tx.miniApp.update({
+          where: { id },
+          data: {
+            name: data.name,
+            clientUrl: data.url,
+            icon: data.iconUrl,
+            tagline: normalizeTagline(data.tagline),
+          },
+          include: miniAppResponseInclude,
+        })
+
+        return miniApp
       })
     )
+
+    if (updated.isErr()) return err(updated.error)
+    if (clash) return err(clash)
+    if (!updated.value) {
+      return err({
+        code: InternalErrorCode.INTERNAL_SERVER_ERROR,
+        message: 'Failed to update mini app',
+      })
+    }
+    return ok(updated.value)
+  }
+
+  /**
+   * Release one held name, canonical or replaced. The name stops redirecting.
+   * Releasing the canonical name does not promote a replaced one.
+   */
+  async releaseLinkName(id: string, name: string) {
+    const normalized = normalizeLinkName(name)
+    if (!normalized) {
+      return err({
+        code: InternalErrorCode.MINI_APP_NOT_FOUND,
+        message: 'Held link name does not exist on this mini app',
+      })
+    }
+
+    const existing = await this.getMiniAppById(id)
+    if (existing.isErr()) return err(existing.error)
+
+    const held = await fromRepositoryPromise(
+      this.prismaService.miniAppLinkName.findUnique({
+        where: { name: normalized },
+        select: { miniAppId: true },
+      })
+    )
+    if (held.isErr()) return err(held.error)
+    if (!held.value || held.value.miniAppId !== id) {
+      return err({
+        code: InternalErrorCode.MINI_APP_NOT_FOUND,
+        message: 'Held link name does not exist on this mini app',
+      })
+    }
+
+    const deleted = await fromRepositoryPromise(
+      this.prismaService.miniAppLinkName.delete({ where: { name: normalized } })
+    )
+    if (deleted.isErr()) return err(deleted.error)
+
+    return ok({ message: 'Link name released' })
   }
 
   /**
@@ -139,7 +346,7 @@ export class PlatformMiniAppRepository {
       this.prismaService.miniApp.update({
         where: { id },
         data: { tier, publishedAt },
-        include: { miniAppRoles: true },
+        include: miniAppResponseInclude,
       })
     )
   }
@@ -150,7 +357,7 @@ export class PlatformMiniAppRepository {
       this.prismaService.miniApp.update({
         where: { id },
         data: { unlisted },
-        include: { miniAppRoles: true },
+        include: miniAppResponseInclude,
       })
     )
   }
@@ -188,7 +395,7 @@ export class PlatformMiniAppRepository {
         }
         return tx.miniApp.findUniqueOrThrow({
           where: { id },
-          include: { miniAppRoles: true },
+          include: miniAppResponseInclude,
         })
       })
     )
@@ -208,6 +415,10 @@ export class PlatformMiniAppRepository {
           data: { retiredAt: new Date() },
           include: { miniAppRoles: true },
         })
+        // Retire keeps the row, so the slug cascade never runs. Names are
+        // deleted on purpose: a retired app's Today Link under a Link Name
+        // returns 404. The platform keeps its own record of the hold.
+        await tx.miniAppLinkName.deleteMany({ where: { miniAppId: id } })
         await tx.notificationApiKey.updateMany({
           where: { miniAppId: id, active: true },
           data: { active: false },
