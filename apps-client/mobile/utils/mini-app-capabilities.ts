@@ -6,13 +6,16 @@
  *   the top frame only. It lists only what this page may use. The host still
  *   checks every request itself; the list is a hint, not trust.
  * - Haptics (`pple:haptic`), fire and forget.
+ * - Opening a URL in the system browser (`pple:open-external-request`,
+ *   utils/mini-app-open-external.ts).
  * - The ready signal (`pple:ready-hold`, `pple:ready`), which keeps the
  *   host's loading screen up until the app says its first screen is there.
  */
 
 /**
  * Pages on these domains (the apex or any subdomain, over https) may save
- * files and play haptics. A preview host such as `*.pages.dev` cannot.
+ * files, play haptics and open URLs in the system browser. A preview host
+ * such as `*.pages.dev` cannot.
  */
 export const TRUSTED_MINI_APP_DOMAINS = ['peoplesparty.or.th', 'pplethai.org', 'ppleth.ai']
 
@@ -54,8 +57,9 @@ export const HAPTIC_TYPE = 'pple:haptic'
 /**
  * The capabilities half of the host script. In the top frame only (an iframe
  * must not believe a host is there, and the host drops its requests) it sets
- * the frozen `window.__ppleHost = { version: 1, capabilities }`. `saveFile`
- * and `haptics` are listed only on a trusted page; `ready` on every page.
+ * the frozen `window.__ppleHost = { version: 1, capabilities }`. `saveFile`,
+ * `haptics` and `openExternal` are listed only on a trusted page; `ready` on
+ * every page.
  *
  * Idempotent: it leaves an existing `window.__ppleHost` alone, so it can run
  * twice (before the page's scripts, and again at page finish on Android, where
@@ -69,7 +73,7 @@ export function hostCapabilitiesScript(): string {
 if (window.top !== window || window.__ppleHost) return;
 ${trustedPageSnippet()}
 var caps = { ready: 1 };
-if (trusted()) { caps.saveFile = 1; caps.haptics = 1; }
+if (trusted()) { caps.saveFile = 1; caps.haptics = 1; caps.openExternal = 1; }
 window.__ppleHost = Object.freeze({ version: 1, capabilities: Object.freeze(caps) });
 })();true;`
 }

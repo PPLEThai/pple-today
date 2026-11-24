@@ -8,6 +8,7 @@
  * script, and remembering sessions already handed out.
  */
 
+import type { OpenExternalReply } from './mini-app-open-external'
 import type { SaveFileReply } from './mini-app-save-file'
 
 export const SESSION_REQUEST_TYPE = 'pple:session-request'
@@ -97,6 +98,7 @@ export type BridgeReply =
   | RoleSwitchAck
   | RoleSwitchResponse
   | SaveFileReply
+  | OpenExternalReply
 
 // Ids are echoed back into the page and used as map keys; anything longer than
 // this is not an SDK talking, so it is not worth holding on to.

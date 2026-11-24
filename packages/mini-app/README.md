@@ -28,6 +28,7 @@ const profile = await miniApp.getProfile()
 | `startKyc({ returnTo? })`   | Sends the user to PPLE ID to verify their identity.                                              |
 | `consumeKycResult()`        | How the user left KYC, if they just came back from it. A UI hint only.                           |
 | `saveFile(file, options?)`  | Saves a `Blob` or URL: PPLE Today's share sheet, else the browser's (see below).                 |
+| `openExternal(url)`         | Opens a URL in the system browser, or the app that claims it (see below).                        |
 | `haptic(style)` / `ready()` | A haptic tap / the first screen is up (see below).                                               |
 | `isMiniApp()` / `logout()`  | Whether the app runs inside PPLE Today / ends the session.                                       |
 
@@ -65,12 +66,45 @@ downloads (`downloaded`). It also works without `init()`, and as `miniApp.saveFi
   (other links use the WebView's own download). Use `saveFile()` for files made in code, files on
   another origin, or saves after an `await`. See [BRIDGE.md](./BRIDGE.md#saving-a-file).
 
+## Opening a URL in the system browser
+
+```ts
+import { openExternal } from '@pplethai/pple-today-miniapp-sdk'
+
+joinButton.onclick = async () => {
+  const result = await openExternal('https://meet.example.com/abc-defg-hij')
+  // { status: 'opened' } or { status: 'failed', reason }
+}
+```
+
+For a link to a third-party service, such as an online meeting, that should not open inside PPLE
+Today: it may need its own login, cookies, camera and microphone, or its own app. Inside PPLE Today
+the host opens it in Safari or Chrome, or in the app that claims the link, and the user switches
+back to PPLE Today as to any other app. It also works without `init()`, and as
+`miniApp.openExternal()`.
+
+- It takes `https:`, `mailto:` and `tel:` URLs; a relative URL is resolved against the page.
+  Anything else (`http:`, `javascript:`, a URL with a user name or password) fails with
+  `invalid-url` and opens nothing.
+- Only pages on `peoplesparty.or.th`, `pplethai.org` and `ppleth.ai` (and their subdomains, over
+  `https`) get the `openExternal` capability, and only the app's main page, not an iframe.
+- Inside PPLE Today there is no browser fallback after a failure: use `result.reason`
+  (`invalid-url`, `not-allowed`, `unsupported` when nothing on the device opens it, `busy` when
+  another URL was opened less than a second ago, `error`) to show your own message.
+- Without the capability (a browser, an older PPLE Today, a page off the domains above) it calls
+  `window.open(url, '_blank', 'noopener')`, or navigates to a `mailto:` or `tel:` URL, and resolves
+  `opened`. In an older PPLE Today on iPhone that loads the URL inside the mini app's WebView; on
+  Android it opens the system browser.
+- Call it from a tap, because a browser blocks a popup that does not come from one.
+- A plain `<a target="_blank">` link is not a substitute: what PPLE Today's WebView does with it
+  differs by platform. See [BRIDGE.md](./BRIDGE.md#links-that-leave-the-page).
+
 ## Capabilities, haptics and the ready signal
 
 ```ts
 import { getHostCapabilities, haptic, hasCapability, ready } from '@pplethai/pple-today-miniapp-sdk'
 
-getHostCapabilities() // { saveFile: 1, haptics: 1, ready: 1 } in PPLE Today, {} elsewhere
+getHostCapabilities() // { saveFile: 1, haptics: 1, openExternal: 1, ready: 1 } in PPLE Today, {} elsewhere
 hasCapability('haptics') // read at call time (on Android it may appear late); see BRIDGE.md#capabilities
 
 haptic('success') // 'selection' | 'light' | 'medium' | 'heavy' | 'soft' | 'rigid' | 'success' | 'warning' | 'error'
