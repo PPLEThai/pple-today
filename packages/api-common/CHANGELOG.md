@@ -1,5 +1,16 @@
 # @pple-today/api-common
 
+## 1.13.0
+
+### Minor Changes
+
+- [#582](https://github.com/PPLEThai/pple-today/pull/582) [`5178709`](https://github.com/PPLEThai/pple-today/commit/5178709a68829320d865b6291f76a43e426fad59) Thanks [@PanJ](https://github.com/PanJ)! - A mini-app can hold one canonical Link Name, plus replaced names that keep redirecting. The redirect host resolves a Link Name the same way it resolves the slug. `MiniApp.slug` is unchanged, so stored notification links and the platform relay URL stay on the slug.
+
+### Patch Changes
+
+- Updated dependencies [[`5178709`](https://github.com/PPLEThai/pple-today/commit/5178709a68829320d865b6291f76a43e426fad59)]:
+  - @pple-today/database@1.13.0
+
 ## 1.12.1
 
 ### Patch Changes

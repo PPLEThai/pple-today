@@ -1,5 +1,11 @@
 # @client/mobile
 
+## 2.18.0
+
+### Minor Changes
+
+- [#583](https://github.com/PPLEThai/pple-today/pull/583) [`f097661`](https://github.com/PPLEThai/pple-today/commit/f09766137ca6d48a08d5df88f52c1ffd8187443c) Thanks [@PanJ](https://github.com/PanJ)! - Today Links emitted after a mini-app is granted a Link Name use that name. Stored links stay on the slug, which still opens the app.
+
 ## 2.17.1
 
 ### Patch Changes
