@@ -40,6 +40,7 @@ import { fetchClient, reactQueryClient } from '../api-client'
 import { clearRecentMiniApps } from '../apps-tab-storage'
 import { getBrowserPackage } from '../get-browser-package'
 import { clearInteractiveNotifications } from '../notification-display'
+import { forgetDeviceRegistration } from '../notification-registration'
 
 const authRequest: AuthRequest = new AuthRequest({
   responseType: ResponseType.Code,
@@ -468,6 +469,8 @@ const UNREGISTER_TIMEOUT_MS = 5000
 
 /** Best effort: logout must not hang or fail because of it. */
 const unregisterDeviceToken = async (session: AuthSession) => {
+  // Whatever happens below, the next sign-in must register this device again.
+  forgetDeviceRegistration()
   try {
     const deviceToken = await getToken(getMessaging())
     const controller = new AbortController()

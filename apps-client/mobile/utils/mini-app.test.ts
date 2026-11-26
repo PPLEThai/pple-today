@@ -31,4 +31,13 @@ describe('resolveIncomingDeepLinkPathname', () => {
       '/mini-app/campaign?path=register'
     )
   })
+
+  // PPLE ID opens the app with the bare scheme to nudge people into turning
+  // notifications on. Every installed version must route that to home, never
+  // read it as a mini-app slug.
+  test('leaves the bare app scheme to the home screen', () => {
+    expect(resolveIncomingDeepLinkPathname('pple-today://')).toBeNull()
+    expect(resolveIncomingDeepLinkPathname('/')).toBeNull()
+    expect(resolveIncomingDeepLinkPathname('')).toBeNull()
+  })
 })
