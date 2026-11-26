@@ -1,5 +1,14 @@
 # @api/backoffice
 
+## 1.28.1
+
+### Patch Changes
+
+- [#589](https://github.com/PPLEThai/pple-today/pull/589) [`80ba1af`](https://github.com/PPLEThai/pple-today/commit/80ba1af707dcfe419e2da64a0ae9140cdc770fbe) Thanks [@PanJ](https://github.com/PanJ)! - Keep today-v2-api from running out of database connections in a sign-in burst: restore the `UserNotificationToken(userId)` index, cache valid notification API keys for 30 s, and skip repeat App User registrations from the platform.
+
+- Updated dependencies [[`80ba1af`](https://github.com/PPLEThai/pple-today/commit/80ba1af707dcfe419e2da64a0ae9140cdc770fbe)]:
+  - @pple-today/database@1.13.1
+
 ## 1.28.0
 
 ### Minor Changes
