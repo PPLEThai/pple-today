@@ -169,6 +169,66 @@ describe('AppUserService.registerExternalOpen', () => {
     expect((await service.getUserCount('app-1'))._unsafeUnwrap()).toBe(0)
   })
 
+  test('a repeat open from this pod skips the database entirely', async () => {
+    const { repository, service } = setup()
+
+    await service.registerExternalOpen('app-1', 'user-1')
+    await service.registerExternalOpen('app-1', 'user-1')
+
+    expect(repository.activeMiniAppExists).toHaveBeenCalledTimes(1)
+    expect(repository.userExists).toHaveBeenCalledTimes(1)
+    expect(repository.register).toHaveBeenCalledTimes(1)
+  })
+
+  test('a live app is checked once for many users', async () => {
+    const { repository, service } = setup()
+
+    await service.registerExternalOpen('app-1', 'user-1')
+    await service.registerExternalOpen('app-1', 'user-2')
+
+    expect(repository.activeMiniAppExists).toHaveBeenCalledTimes(1)
+    expect(repository.register).toHaveBeenCalledTimes(2)
+  })
+
+  test('registration is re-checked once the memory expires', async () => {
+    const repository = createFakeRepository()
+    let now = 0
+    const service = new AppUserService(
+      repository as unknown as MiniAppUserRepository,
+      loggerService,
+      { now: () => now }
+    )
+
+    await service.registerExternalOpen('app-1', 'user-1')
+    now += 5 * 60 * 1000
+    await service.registerExternalOpen('app-1', 'user-1')
+
+    expect(repository.activeMiniAppExists).toHaveBeenCalledTimes(2)
+    expect(repository.register).toHaveBeenCalledTimes(2)
+  })
+
+  test('a sub with no account is not remembered, so it registers once the account exists', async () => {
+    const { repository, service } = setup()
+    repository.userExists.mockResolvedValueOnce(ok(false))
+
+    await service.registerExternalOpen('app-1', 'late-signup')
+    await service.registerExternalOpen('app-1', 'late-signup')
+
+    expect(repository.register).toHaveBeenCalledOnce()
+  })
+
+  test('a failed write is not remembered', async () => {
+    const { repository, service } = setup()
+    repository.register.mockResolvedValueOnce(
+      err({ code: 'UNKNOWN_ERROR', message: 'database is down' }) as never
+    )
+
+    await service.registerExternalOpen('app-1', 'user-1')
+    expect((await service.registerExternalOpen('app-1', 'user-1')).isOk()).toBe(true)
+
+    expect(repository.register).toHaveBeenCalledTimes(2)
+  })
+
   test('maps a repository failure to an internal server error', async () => {
     const { repository, service } = setup()
     repository.register.mockResolvedValueOnce(

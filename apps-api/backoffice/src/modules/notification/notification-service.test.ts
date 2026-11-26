@@ -152,6 +152,43 @@ describe('NotificationService.checkApiToken (legacy keys)', () => {
   })
 })
 
+describe('NotificationService.checkApiToken (cache)', () => {
+  test('a valid key is served from memory within the TTL, then re-checked', async () => {
+    let now = SENT_AT.getTime()
+    const { service, notificationRepository } = createService(LEGACY_KEY, {
+      now: () => new Date(now),
+    })
+
+    await service.checkApiToken('plaintext-key')
+    await service.checkApiToken('plaintext-key')
+    expect(notificationRepository.checkApiKey).toHaveBeenCalledTimes(1)
+
+    now += 30 * 1000
+    await service.checkApiToken('plaintext-key')
+    expect(notificationRepository.checkApiKey).toHaveBeenCalledTimes(2)
+  })
+
+  test('an unknown key is never cached, so a newly issued key works at once', async () => {
+    const { service, notificationRepository } = createService(null)
+
+    expect((await service.checkApiToken('new-key'))._unsafeUnwrap()).toBeNull()
+    notificationRepository.checkApiKey.mockImplementation(async () => ok(LEGACY_KEY))
+
+    expect((await service.checkApiToken('new-key'))._unsafeUnwrap()).toEqual(LEGACY_KEY)
+    expect(notificationRepository.checkApiKey).toHaveBeenCalledTimes(2)
+  })
+
+  test('keys are cached separately', async () => {
+    const { service, notificationRepository } = createService(null)
+    notificationRepository.checkApiKey.mockImplementation(async (token: string) =>
+      ok(token === 'bound' ? BOUND_KEY : LEGACY_KEY)
+    )
+
+    expect((await service.checkApiToken('legacy'))._unsafeUnwrap()).toEqual(LEGACY_KEY)
+    expect((await service.checkApiToken('bound'))._unsafeUnwrap()).toEqual(BOUND_KEY)
+  })
+})
+
 const APP_KEY = {
   id: 'builder-key-id',
   miniApp: {
