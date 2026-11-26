@@ -40,6 +40,11 @@ model UserNotificationToken {
 
   user           User                       @relation(fields: [userId], references: [id])
   liveActivities NotificationLiveActivity[]
+
+  // Postgres does not index foreign keys. Moving the primary key to `token`
+  // dropped this index, leaving every by-user lookup (app-install status, the
+  // send path) a full scan of the table.
+  @@index([userId])
 }
 
 enum NotificationInAppType {

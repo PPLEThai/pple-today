@@ -5,7 +5,8 @@ import {
   normalizeThaiPhoneNumber,
 } from '@pple-today/api-common/utils'
 import type { NotificationTokenPlatform } from '@pple-today/database/prisma'
-import { err, ok } from 'neverthrow'
+import crypto from 'crypto'
+import { err, type Ok, ok } from 'neverthrow'
 
 import { readClientInteraction } from './interaction-read'
 import { type CallbackSendConfig, prepareInteractionSend } from './interaction-send'
@@ -17,6 +18,26 @@ import type {
 } from './models'
 import type { NotificationRepository } from './repository'
 import { resolveAppLinkPath } from './resolve-app-link-path'
+
+import { TtlCache } from '../../utils/ttl-cache'
+
+/**
+ * How long a pod trusts a valid API key without asking the database again.
+ *
+ * Every external call authenticates its key, and in a sign-in burst that lookup
+ * was the query most often starved of a pooled connection (#588). The cost of
+ * caching is staleness, per pod: a key deactivated by rotation or retirement,
+ * or a changed daily quota, can keep its old answer for up to this long on a
+ * pod that already cached it. Only valid keys are cached, so a new or
+ * re-activated key is never refused because of the cache.
+ */
+const API_KEY_CACHE_TTL_MS = 30 * 1000
+/** Valid keys are a few per mini app; the cap only guards against surprises. */
+const API_KEY_CACHE_MAX_ENTRIES = 1000
+
+type ApiKeyRecord = NonNullable<
+  Extract<Awaited<ReturnType<NotificationRepository['checkApiKey']>>, Ok<unknown, unknown>>['value']
+>
 
 /**
  * The sending app as the client renders it. A notification with no app is PPLE
@@ -53,7 +74,15 @@ export class NotificationService {
       /** Injected so interaction state is testable without a fake timer. */
       now?: () => Date
     } = {}
-  ) {}
+  ) {
+    this.apiKeyCache = new TtlCache({
+      ttlMs: API_KEY_CACHE_TTL_MS,
+      maxEntries: API_KEY_CACHE_MAX_ENTRIES,
+      now: () => this.now().getTime(),
+    })
+  }
+
+  private readonly apiKeyCache: TtlCache<ApiKeyRecord>
 
   private interactionsEnabled() {
     return { enabled: this.options.interactiveNotificationsEnabled ?? false }
@@ -72,11 +101,18 @@ export class NotificationService {
    * point it authenticates.
    */
   async checkApiToken(apiToken: string) {
+    // Keyed by digest so the cache never holds a presented key in plaintext.
+    const cacheKey = crypto.hash('sha256', apiToken)
+    const cached = this.apiKeyCache.get(cacheKey)
+    if (cached) return ok(cached)
+
     const isValid = await this.notificationRepository.checkApiKey(apiToken)
 
     if (isValid.isErr()) {
       return mapRepositoryError(isValid.error)
     }
+
+    if (isValid.value) this.apiKeyCache.set(cacheKey, isValid.value)
 
     return ok(isValid.value)
   }
