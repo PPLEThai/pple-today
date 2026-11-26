@@ -2,7 +2,7 @@ import '../global.css'
 import 'dayjs/locale/th'
 
 import * as React from 'react'
-import { AppState, PermissionsAndroid, Platform } from 'react-native'
+import { AppState, Platform } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { DevToolsBubble } from 'react-native-react-query-devtools'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
@@ -27,13 +27,10 @@ import { NAV_THEME } from '@pple-today/ui/lib/constants'
 import { PortalHost } from '@pple-today/ui/portal'
 import { toast, Toaster } from '@pple-today/ui/toast'
 import {
-  AuthorizationStatus,
   getInitialNotification,
   getMessaging,
-  getToken,
   onMessage,
   onNotificationOpenedApp,
-  requestPermission,
 } from '@react-native-firebase/messaging'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import dayjs from 'dayjs'
@@ -50,6 +47,7 @@ import { InfoIcon } from 'lucide-react-native'
 
 import { AppUpdateGate } from '@app/components/app-update-gate'
 import { NotificationSenderIcon } from '@app/components/notification/sender-icon'
+import { NotificationSettingsPromptDialog } from '@app/components/notification/settings-prompt-dialog'
 import { StatusBarProvider } from '@app/context/status-bar'
 import { environment } from '@app/env'
 import { useScreenTracking } from '@app/libs/analytics'
@@ -57,24 +55,27 @@ import { reactQueryClient } from '@app/libs/api-client'
 import { initAppUpdate } from '@app/libs/app-update'
 import { AuthLifeCycleHook, useAuthMe, useSession } from '@app/libs/auth'
 import { useFacebookConnectOutboxFlush } from '@app/libs/facebook-connect-attempt'
-import {
-  addLiveActivityRegistrationListener,
-  getLiveActivityRegistration,
-} from '@app/libs/live-activity'
+import { addLiveActivityRegistrationListener } from '@app/libs/live-activity'
 import {
   addTrayActionListener,
   dismissTrayNotification,
   toTrayResponseInput,
 } from '@app/libs/notification-display'
+import {
+  claimSettingsPrompt,
+  consumeAppLinkOpen,
+  type DeviceRegistrationResult,
+  hasPromptedThisProcess,
+  noteOpenedByUrl,
+  registerDevice,
+} from '@app/libs/notification-registration'
 import { parseBrandedPush, pushBadgeCount, pushSenderApp } from '@app/utils/branded-push'
 import { openLink } from '@app/utils/link'
-import { liveActivityRegistrationFields } from '@app/utils/live-activity'
 import { resolveIncomingDeepLinkPath } from '@app/utils/mini-app'
 import {
   DEFAULT_ACTION_IDENTIFIER,
   parseDismiss,
   pendingActionFromResponse,
-  supportsTrayInteraction,
   TRAY_RESULT_CATEGORY,
 } from '@app/utils/tray-interaction'
 
@@ -321,28 +322,9 @@ function AppIconBadgeSync() {
   return null
 }
 
-async function requestUserPermission() {
-  if (Platform.OS === 'android' && Platform.Version >= 33) {
-    const requestResult = await PermissionsAndroid.request(
-      PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS
-    )
-
-    return requestResult === PermissionsAndroid.RESULTS.GRANTED
-  }
-
-  if (Platform.OS === 'ios') {
-    const authStatus = await requestPermission(messaging)
-    const enabled =
-      authStatus === AuthorizationStatus.AUTHORIZED ||
-      authStatus === AuthorizationStatus.PROVISIONAL
-
-    return enabled
-  }
-
-  throw new Error(`Unsupported platform: ${Platform.OS}`)
-}
-
 const LIVE_ACTIVITY_REREGISTER_DELAY_MS = 2000
+/** Coming back to the foreground re-checks permission and the token, debounced. */
+const FOREGROUND_RECHECK_DELAY_MS = 1000
 
 /** An interactive push on iOS, whose taps `expo-notifications` routes instead of RNFB. */
 const isIosInteractive = (data: Record<string, unknown>) =>
@@ -356,6 +338,61 @@ function NotificationTokenConsentPopup() {
   )
   const markAsReadMutation = reactQueryClient.useMutation('put', '/notifications/read/:id', {})
   const authMe = useAuthMe()
+  const userId = authMe.data?.id
+  const [settingsPromptOpen, setSettingsPromptOpen] = React.useState(false)
+
+  // Permission check, then token registration (skipped when unchanged), then the
+  // "notifications are off" dialog when the OS will no longer ask. See
+  // `libs/notification-registration.ts`.
+  const registerAndMaybeNudge = async (input: {
+    mayPrompt: boolean
+    openedByAppLink: boolean
+  }): Promise<DeviceRegistrationResult | null> => {
+    if (!userId) return null
+    const result = await registerDevice({
+      userId: String(userId),
+      mayPrompt: input.mayPrompt || input.openedByAppLink,
+      send: (body) => registerNotificationTokenMutation.mutateAsync({ body }),
+    })
+    if (await claimSettingsPrompt(result.permission, input.openedByAppLink)) {
+      setSettingsPromptOpen(true)
+    }
+    return result
+  }
+
+  // PPLE ID's "เปิดการแจ้งเตือน" button opens the app with the bare
+  // `pple-today://`: note it, so the next check may prompt or show the dialog.
+  React.useEffect(() => {
+    Linking.getInitialURL()
+      .then(noteOpenedByUrl)
+      .catch(() => {})
+    const subscription = Linking.addEventListener('url', ({ url }) => noteOpenedByUrl(url))
+    return () => subscription.remove()
+  }, [])
+
+  // Coming back to the foreground: a warm open from PPLE ID, or a return from
+  // Settings with notifications now on, registers the token without a relaunch.
+  // The OS prompt shows from here only if it hasn't this run (Android would
+  // otherwise ask again after every refusal) or the app link asked for it.
+  React.useEffect(() => {
+    if (!userId) return
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const subscription = AppState.addEventListener('change', (state) => {
+      clearTimeout(timer)
+      if (state !== 'active') return
+      timer = setTimeout(() => {
+        registerAndMaybeNudge({
+          mayPrompt: !hasPromptedThisProcess(),
+          openedByAppLink: consumeAppLinkOpen(),
+        })
+      }, FOREGROUND_RECHECK_DELAY_MS)
+    })
+    return () => {
+      clearTimeout(timer)
+      subscription.remove()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId])
 
   // `Record<string, unknown>` rather than RNFB's own data type, because the same
   // handler now also receives the data off a notification this client presented,
@@ -443,46 +480,14 @@ function NotificationTokenConsentPopup() {
       }
     }
 
-    // Registers (or re-registers) this device's token. Returns whether it did.
-    const register = async () => {
-      try {
-        if (!authMe.data) return false
-
-        const requestPermissionResult = await requestUserPermission()
-        if (!requestPermissionResult) return false
-
-        const token = await getToken(messaging)
-
-        await registerNotificationTokenMutation.mutateAsync({
-          body: {
-            deviceToken: token,
-            // The server builds a different push payload per platform, so it has
-            // to know which one this token belongs to.
-            platform: Platform.OS === 'ios' ? 'IOS' : 'ANDROID',
-            // Asserts that this build can render an app-branded notification from
-            // a data-only message. Only the Android path does — see
-            // `registerBrandedPushBackgroundHandler` — and on iOS the server
-            // brands the push itself, with no client involvement. Registration
-            // already runs on every cold start after auth, so an upgraded install
-            // re-asserts this without any new trigger.
-            supportsAppBranding: Platform.OS === 'android',
-            // Asserts that this build can show interaction actions on the OS
-            // notification and submit them with a response token: on Android the
-            // background task and listener in `libs/notification-display.ts`, on
-            // iOS the extension (`assets/NotificationService.m`) and the native
-            // submit (`modules/notification-actions`). Switched off in one place,
-            // `TRAY_INTERACTION_ENABLED`.
-            supportsTrayInteraction: supportsTrayInteraction(Platform.OS),
-            // iOS 17.2+ only: the push-to-start token and whether the user allows
-            // Live Activities. Empty elsewhere. A change re-registers, below.
-            ...liveActivityRegistrationFields(Platform.OS, getLiveActivityRegistration()),
-          },
-        })
-        return true
-      } catch (err) {
-        console.error('Failed to register notification token', JSON.stringify(err))
-        return false
-      }
+    // Registers (or re-registers) this device's token. Returns whether the
+    // server holds it. Launch may show the OS prompt, as it always has.
+    const register = async (mayPrompt = true) => {
+      const result = await registerAndMaybeNudge({
+        mayPrompt,
+        openedByAppLink: consumeAppLinkOpen(),
+      })
+      return result?.registered ?? false
     }
 
     const registerNotification = async () => {
@@ -499,7 +504,7 @@ function NotificationTokenConsentPopup() {
     const liveActivitySubscription = addLiveActivityRegistrationListener(() => {
       clearTimeout(reRegisterTimer)
       reRegisterTimer = setTimeout(() => {
-        register()
+        register(false)
       }, LIVE_ACTIVITY_REREGISTER_DELAY_MS)
     })
 
@@ -578,5 +583,10 @@ function NotificationTokenConsentPopup() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authMe.data])
 
-  return null
+  return (
+    <NotificationSettingsPromptDialog
+      open={settingsPromptOpen}
+      onOpenChange={setSettingsPromptOpen}
+    />
+  )
 }
