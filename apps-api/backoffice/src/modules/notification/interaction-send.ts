@@ -16,6 +16,8 @@ export interface CallbackTarget {
   source: MiniAppSource
   notificationCallbackUrl: string | null
   notificationCallbackSecret: string | null
+  /** Set on an ADMIN app connected to a platform Bridge: responses go to the relay. */
+  platformBridgeSlug?: string | null
 }
 
 /**
@@ -98,11 +100,11 @@ export async function prepareInteractionSend(args: {
 
   const target = await args.getCallbackTarget(args.app.id)
   // Mirrors `resolveCallbackTarget`: refuse now whatever delivery could not do later.
-  // PLATFORM apps deliver through the relay; ADMIN apps need a URL, a secret and the key.
+  // PLATFORM apps (and ADMIN apps connected to a Bridge) deliver through the relay; ADMIN apps need a URL, a secret and the key.
   const config = args.callbackConfig ?? {}
   const hasTarget =
     target !== null &&
-    (target.source === MiniAppSource.PLATFORM
+    (target.source === MiniAppSource.PLATFORM || Boolean(target.platformBridgeSlug)
       ? Boolean(config.platformRelayUrl && config.platformRelayToken)
       : Boolean(
           target.notificationCallbackUrl && target.notificationCallbackSecret && config.secretKey

@@ -79,6 +79,15 @@ model MiniApp {
   notificationCallbackPreviousSecret          String?
   notificationCallbackPreviousSecretExpiresAt DateTime?
 
+  // The slug of the pple-platform Bridge this ADMIN app is connected to; null
+  // when it is not connected. Non-null IS the connected state. The platform
+  // connects/disconnects through `/platform/admin-mini-apps/:id/bridge`. While
+  // connected, every Notification Response goes to the platform relay keyed by
+  // this slug (overriding the callback URL above, which is left stored so a
+  // disconnect falls back to it), and a PLATFORM-source notification key bound
+  // to the app is held by the platform. Unique: one Bridge, one mini-app.
+  platformBridgeSlug String? @unique
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

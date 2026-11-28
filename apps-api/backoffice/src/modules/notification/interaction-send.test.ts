@@ -68,6 +68,21 @@ describe('prepareInteractionSend callback check mirrors resolveCallbackTarget', 
     }
   })
 
+  test('a connected ADMIN app needs the relay, not its own URL and secret', async () => {
+    const connected = { ...admin, platformBridgeSlug: 'bridge' }
+    expect((await run(connected, FULL)).isOk()).toBe(true)
+    expect(
+      (
+        await run(
+          { ...connected, notificationCallbackUrl: null, notificationCallbackSecret: null },
+          FULL
+        )
+      ).isOk()
+    ).toBe(true)
+    const r = await run(connected, { ...FULL, platformRelayToken: undefined })
+    expect(r._unsafeUnwrapErr().code).toBe(InternalErrorCode.NOTIFICATION_INTERACTION_NO_CALLBACK)
+  })
+
   test('no target at all is refused', async () => {
     expect((await run(null, FULL))._unsafeUnwrapErr().code).toBe(
       InternalErrorCode.NOTIFICATION_INTERACTION_NO_CALLBACK

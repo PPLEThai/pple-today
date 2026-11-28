@@ -248,3 +248,41 @@ export const LookupUserResponse = t.Object({
   }),
 })
 export type LookupUserResponse = Static<typeof LookupUserResponse>
+
+export const AdminMiniAppSummary = t.Object({
+  id: t.String({ description: 'Mini app id' }),
+  slug: t.String({ description: 'Mini app slug' }),
+  name: t.String({ description: 'Display name' }),
+  icon: t.Nullable(t.String({ description: 'Icon URL' })),
+  platformBridgeSlug: t.Nullable(
+    t.String({ description: 'Slug of the Bridge it is connected to; null when not connected' })
+  ),
+})
+export const ListAdminMiniAppsResponse = t.Array(AdminMiniAppSummary)
+export type ListAdminMiniAppsResponse = Static<typeof ListAdminMiniAppsResponse>
+
+export const ConnectBridgeBody = t.Object({
+  bridgeSlug: t.String({
+    minLength: 1,
+    description: "The Bridge's Builder App slug on pple-platform",
+  }),
+})
+export type ConnectBridgeBody = Static<typeof ConnectBridgeBody>
+
+export const ConnectBridgeResponse = t.Object({
+  miniAppId: t.String(),
+  bridgeSlug: t.String(),
+  notificationKey: t.String({
+    description:
+      'Notification key for POST /external/notifications, audience-bound and metered. Shown once.',
+  }),
+})
+export type ConnectBridgeResponse = Static<typeof ConnectBridgeResponse>
+
+export const DisconnectBridgeResponse = t.Object({
+  miniAppId: t.String(),
+  disconnected: t.Boolean({
+    description: 'False when the mini app had no Bridge (nothing changed)',
+  }),
+})
+export type DisconnectBridgeResponse = Static<typeof DisconnectBridgeResponse>

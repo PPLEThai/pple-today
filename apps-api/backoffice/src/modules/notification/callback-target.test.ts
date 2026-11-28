@@ -281,4 +281,37 @@ describe('resolveCallbackTarget', () => {
     )
     expect(r.ok).toBe(false)
   })
+
+  test('connected ADMIN: relay URL under the Bridge slug, overriding its own URL', async () => {
+    const r = await resolveCallbackTarget(
+      { ...adminApp, platformBridgeSlug: 'payments-bridge' },
+      { platformRelayUrl: 'https://relay.example', platformRelayToken: 'tok' }
+    )
+    expect(r).toEqual({
+      ok: true,
+      target: {
+        kind: 'PLATFORM',
+        url: 'https://relay.example/apps/payments-bridge/notification-response',
+        headers: { Authorization: 'Bearer tok' },
+      },
+    })
+  })
+
+  test('connected ADMIN: a config error when the relay is not configured, even with its own URL', async () => {
+    const r = await resolveCallbackTarget(
+      { ...adminApp, platformBridgeSlug: 'payments-bridge' },
+      { secretKey: KEY },
+      publicLookup
+    )
+    expect(r).toMatchObject({ ok: false, configError: true })
+  })
+
+  test('disconnected ADMIN (null slug) falls back to its own signed callback', async () => {
+    const r = await resolveCallbackTarget(
+      { ...adminApp, platformBridgeSlug: null },
+      { platformRelayUrl: 'https://relay.example', platformRelayToken: 'tok', secretKey: KEY },
+      publicLookup
+    )
+    expect(r).toMatchObject({ ok: true, target: { kind: 'ADMIN' } })
+  })
 })

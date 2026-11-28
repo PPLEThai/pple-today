@@ -58,6 +58,9 @@ const createFakeRepository = () => ({
   setCollaborators: vi.fn(),
   retire: vi.fn(),
   releaseLinkName: vi.fn(),
+  listAdminMiniApps: vi.fn(),
+  connectBridge: vi.fn(),
+  disconnectBridge: vi.fn(),
 })
 
 const createFakeZitadel = () => ({
@@ -598,5 +601,80 @@ describe('PlatformMiniAppService.releaseLinkName', () => {
 
     expect(result._unsafeUnwrapErr().code).toBe(InternalErrorCode.MINI_APP_NOT_FOUND)
     expect(cache.invalidate).not.toHaveBeenCalled()
+  })
+})
+
+describe('PlatformMiniAppService.connectBridge', () => {
+  test('returns the key once, as notificationKey', async () => {
+    const repository = createFakeRepository()
+    repository.connectBridge.mockResolvedValue(
+      ok({ refusal: null, miniAppId: 'app-1', bridgeSlug: 'bridge', notificationApiKey: 'k-plain' })
+    )
+    const { service } = makeService(repository)
+
+    const result = await service.connectBridge('app-1', 'bridge')
+
+    expect(result._unsafeUnwrap()).toEqual({
+      miniAppId: 'app-1',
+      bridgeSlug: 'bridge',
+      notificationKey: 'k-plain',
+    })
+  })
+
+  test.each([
+    ['NOT_FOUND', InternalErrorCode.MINI_APP_NOT_FOUND],
+    ['NOT_ADMIN_SOURCE', InternalErrorCode.MINI_APP_NOT_ADMIN_SOURCE],
+    ['ALREADY_CONNECTED', InternalErrorCode.MINI_APP_ALREADY_CONNECTED],
+  ])('refuses %s', async (refusal, code) => {
+    const repository = createFakeRepository()
+    repository.connectBridge.mockResolvedValue(ok({ refusal }))
+    const { service } = makeService(repository)
+
+    const result = await service.connectBridge('app-1', 'bridge')
+
+    expect(result._unsafeUnwrapErr().code).toBe(code)
+  })
+
+  test('maps a Bridge slug held by another app to a conflict', async () => {
+    const repository = createFakeRepository()
+    repository.connectBridge.mockResolvedValue(
+      err({ code: 'UNIQUE_CONSTRAINT_FAILED', message: 'dup' })
+    )
+    const { service } = makeService(repository)
+
+    const result = await service.connectBridge('app-1', 'bridge')
+
+    expect(result._unsafeUnwrapErr().code).toBe(InternalErrorCode.MINI_APP_BRIDGE_SLUG_TAKEN)
+  })
+})
+
+describe('PlatformMiniAppService.disconnectBridge', () => {
+  test('reports whether the app was connected', async () => {
+    const repository = createFakeRepository()
+    repository.disconnectBridge.mockResolvedValue(ok({ wasConnected: true }))
+    const { service } = makeService(repository)
+
+    expect((await service.disconnectBridge('app-1'))._unsafeUnwrap()).toEqual({
+      miniAppId: 'app-1',
+      disconnected: true,
+    })
+  })
+
+  test('is idempotent for an app with no Bridge', async () => {
+    const repository = createFakeRepository()
+    repository.disconnectBridge.mockResolvedValue(ok({ wasConnected: false }))
+    const { service } = makeService(repository)
+
+    expect((await service.disconnectBridge('app-1'))._unsafeUnwrap().disconnected).toBe(false)
+  })
+
+  test('is not-found for a PLATFORM, retired or unknown app', async () => {
+    const repository = createFakeRepository()
+    repository.disconnectBridge.mockResolvedValue(ok(null))
+    const { service } = makeService(repository)
+
+    expect((await service.disconnectBridge('app-1'))._unsafeUnwrapErr().code).toBe(
+      InternalErrorCode.MINI_APP_NOT_FOUND
+    )
   })
 })

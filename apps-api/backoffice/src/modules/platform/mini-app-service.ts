@@ -277,4 +277,67 @@ export class PlatformMiniAppService {
 
     return ok(result.value)
   }
+
+  /** ADMIN-source mini-apps the platform may connect to a Bridge. */
+  async listAdminMiniApps() {
+    const result = await this.platformMiniAppRepository.listAdminMiniApps()
+    if (result.isErr()) return mapRepositoryError(result.error, NOT_FOUND)
+    return ok(result.value)
+  }
+
+  /**
+   * Connect an ADMIN mini-app to a platform Bridge. Responses then go to the
+   * platform relay keyed by `bridgeSlug`, and the returned PLATFORM-source
+   * notification key (shown once) is the one the platform sends with.
+   * A PLATFORM-source app, an already-connected app, and a Bridge slug another
+   * app holds are each refused with their own 409.
+   */
+  async connectBridge(id: string, bridgeSlug: string) {
+    const result = await this.platformMiniAppRepository.connectBridge(id, bridgeSlug)
+    if (result.isErr()) {
+      return mapRepositoryError(result.error, {
+        UNIQUE_CONSTRAINT_FAILED: {
+          code: InternalErrorCode.MINI_APP_BRIDGE_SLUG_TAKEN,
+          message: 'Another mini app is already connected to this Bridge',
+        },
+        ...NOT_FOUND,
+      })
+    }
+
+    const value = result.value
+    switch (value.refusal) {
+      case 'NOT_FOUND':
+        return err(NOT_FOUND.RECORD_NOT_FOUND)
+      case 'NOT_ADMIN_SOURCE':
+        return err({
+          code: InternalErrorCode.MINI_APP_NOT_ADMIN_SOURCE,
+          message: 'Only an ADMIN-source mini app can be connected to a Bridge',
+        })
+      case 'ALREADY_CONNECTED':
+        return err({
+          code: InternalErrorCode.MINI_APP_ALREADY_CONNECTED,
+          message: 'This mini app is already connected to a Bridge',
+        })
+    }
+
+    return ok({
+      miniAppId: value.miniAppId,
+      bridgeSlug: value.bridgeSlug,
+      notificationKey: value.notificationApiKey,
+    })
+  }
+
+  /**
+   * Disconnect an ADMIN mini-app from its Bridge: clears the slug and
+   * deactivates the PLATFORM-source key. Idempotent — an ADMIN app that is not
+   * connected answers success (`disconnected: false`); an unknown, retired or
+   * PLATFORM-source app is not-found.
+   */
+  async disconnectBridge(id: string) {
+    const result = await this.platformMiniAppRepository.disconnectBridge(id)
+    if (result.isErr()) return mapRepositoryError(result.error, NOT_FOUND)
+    if (!result.value) return err(NOT_FOUND.RECORD_NOT_FOUND)
+
+    return ok({ miniAppId: id, disconnected: result.value.wasConnected })
+  }
 }

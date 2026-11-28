@@ -504,6 +504,7 @@ export class NotificationRepository {
           source: true,
           notificationCallbackUrl: true,
           notificationCallbackSecret: true,
+          platformBridgeSlug: true,
         },
       })
     )

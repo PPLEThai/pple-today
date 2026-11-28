@@ -823,6 +823,14 @@ The app's deployment target stays 15.1. All of this is gated with
 | `ADMIN` | `MiniApp.notificationCallbackUrl`. https only, with no credentials in the URL. Every address the host resolves to must be public (not private, loopback or link-local), the connection is pinned to the address that was checked, and redirects are never followed: a `3xx` is a permanent failure (SSRF guard, D13). Checked when saved and again on every send. |
 | `PLATFORM` | The predefined path **`/.pple/notification-response`**, reached **through the platform**. today-v2 POSTs to a pple-platform relay, which calls the tenant through the dispatch-namespace binding (D1). |
 
+An `ADMIN` app **connected to a pple-platform Bridge** (`MiniApp.platformBridgeSlug`
+set, via `POST /platform/admin-mini-apps/:id/bridge`) is delivered like a
+`PLATFORM` app, through the same relay but under the **Bridge's slug**
+(`{slug}` below is `platformBridgeSlug`). This overrides the app's own
+`notificationCallbackUrl` for every response, including answers to notifications
+sent with the app's own ADMIN key. The stored URL and secret are left alone, so
+`DELETE /platform/admin-mini-apps/:id/bridge` falls back to them.
+
 ```
 POST {PLATFORM_CALLBACK_RELAY_URL}/apps/{slug}/notification-response
 Authorization: Bearer {PLATFORM_CALLBACK_RELAY_TOKEN}

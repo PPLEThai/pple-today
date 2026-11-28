@@ -193,6 +193,11 @@ export type CallbackTargetApp = {
   /** The secret that was replaced by the last rotation; still signs until it expires. */
   notificationCallbackPreviousSecret?: string | null
   notificationCallbackPreviousSecretExpiresAt?: Date | null
+  /**
+   * The pple-platform Bridge this ADMIN app is connected to, if any. Set means
+   * every response goes to the platform relay under this slug.
+   */
+  platformBridgeSlug?: string | null
 }
 
 export type CallbackTargetConfig = {
@@ -235,14 +240,24 @@ export const resolveCallbackTarget = async (
   lookup: HostLookup = defaultHostLookup,
   now: Date = new Date()
 ): Promise<CallbackTargetResult> => {
-  if (app.source === MiniAppSource.PLATFORM) {
+  // A PLATFORM app is relayed under its own slug. A *connected* ADMIN app is
+  // relayed under its Bridge's slug and its own callback URL is ignored: once
+  // connected, every response goes to the platform (the stored URL and secret
+  // stay, so a disconnect falls back to them).
+  const relaySlug =
+    app.source === MiniAppSource.PLATFORM
+      ? app.slug
+      : app.platformBridgeSlug
+        ? app.platformBridgeSlug
+        : null
+  if (relaySlug !== null) {
     if (!config.platformRelayUrl || !config.platformRelayToken)
       return { ok: false, reason: 'Platform callback relay is not configured', configError: true }
     return {
       ok: true,
       target: {
         kind: 'PLATFORM',
-        url: buildPlatformRelayUrl(config.platformRelayUrl, app.slug),
+        url: buildPlatformRelayUrl(config.platformRelayUrl, relaySlug),
         headers: { Authorization: `Bearer ${config.platformRelayToken}` },
       },
     }
