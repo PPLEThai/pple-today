@@ -1,5 +1,16 @@
 # @pple-today/api-common
 
+## 1.14.0
+
+### Minor Changes
+
+- [#595](https://github.com/PPLEThai/pple-today/pull/595) [`2ecc5de`](https://github.com/PPLEThai/pple-today/commit/2ecc5de02f4b9c65146364fa5d3f3b71f0d19a15) Thanks [@PanJ](https://github.com/PanJ)! - Let the platform connect an ADMIN-source mini-app to a pple-platform Bridge. New `/platform/admin-mini-apps` routes list the ADMIN apps and connect or disconnect one (`POST`/`DELETE /platform/admin-mini-apps/:id/bridge`). Connecting records the Bridge slug on the mini-app (`MiniApp.platformBridgeSlug`) and issues a platform-held, audience-bound, metered notification key; while connected, every Notification Response is delivered through the platform relay under that slug instead of the app's own callback URL. Disconnecting clears the slug and deactivates that key, leaving the app's ADMIN keys, App Users and callback settings untouched.
+
+### Patch Changes
+
+- Updated dependencies [[`2ecc5de`](https://github.com/PPLEThai/pple-today/commit/2ecc5de02f4b9c65146364fa5d3f3b71f0d19a15)]:
+  - @pple-today/database@1.14.0
+
 ## 1.13.0
 
 ### Minor Changes
