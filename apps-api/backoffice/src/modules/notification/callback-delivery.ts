@@ -522,6 +522,7 @@ export class NotificationCallbackDeliveryService implements NotificationCallback
             notificationCallbackSecret: true,
             notificationCallbackPreviousSecret: true,
             notificationCallbackPreviousSecretExpiresAt: true,
+            platformBridgeSlug: true,
           },
         },
       },

@@ -4,17 +4,21 @@ import Elysia from 'elysia'
 
 import { PlatformAuthGuard } from './guard'
 import {
+  ConnectBridgeBody,
+  ConnectBridgeResponse,
   CreateMiniAppBody,
   CreateMiniAppInviteBody,
   CreateMiniAppInviteResponse,
   CreateMiniAppResponse,
   DeleteMiniAppInviteParams,
   DeleteMiniAppInviteResponse,
+  DisconnectBridgeResponse,
   GetBetaMembershipParams,
   GetBetaMembershipResponse,
   GetMiniAppNotificationUsageResponse,
   GetMiniAppUserCountParams,
   GetMiniAppUserCountResponse,
+  ListAdminMiniAppsResponse,
   ListMiniAppInvitesResponse,
   LookupUserBody,
   LookupUserResponse,
@@ -326,6 +330,99 @@ export const PlatformController = new Elysia({ prefix: '/platform', tags: ['Plat
         summary: 'Retire a Builder App',
         description:
           'Retire the app: delete its Zitadel OIDC app, soft-delete the mini-app row, and deactivate its notification key. The app disappears from every list; the row and App User registry are kept for audit.',
+      },
+    }
+  )
+  // Connecting a central-team (ADMIN) mini-app to a pple-platform Bridge
+  // (pple-platform ADR-0063). The mini-app, its App Users, its ADMIN keys and its
+  // settings are untouched; only the response delivery and one key change.
+  .get(
+    '/admin-mini-apps',
+    async ({ status, platformMiniAppService }) => {
+      const result = await platformMiniAppService.listAdminMiniApps()
+
+      if (result.isErr()) {
+        return mapErrorCodeToResponse(result.error, status)
+      }
+
+      return status(200, result.value)
+    },
+    {
+      requiredPlatformService: true,
+      response: {
+        200: ListAdminMiniAppsResponse,
+        ...createErrorSchema(
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.MINI_APP_NOT_FOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'List ADMIN-source mini apps',
+        description:
+          'Non-retired central-team mini apps, with the Bridge each is connected to (null when not connected), so a Platform Admin can pick one to connect.',
+      },
+    }
+  )
+  .post(
+    '/admin-mini-apps/:id/bridge',
+    async ({ params, body, status, platformMiniAppService }) => {
+      const result = await platformMiniAppService.connectBridge(params.id, body.bridgeSlug)
+
+      if (result.isErr()) {
+        return mapErrorCodeToResponse(result.error, status)
+      }
+
+      return status(200, result.value)
+    },
+    {
+      requiredPlatformService: true,
+      params: MiniAppIdParams,
+      body: ConnectBridgeBody,
+      response: {
+        200: ConnectBridgeResponse,
+        ...createErrorSchema(
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.MINI_APP_NOT_FOUND,
+          InternalErrorCode.MINI_APP_NOT_ADMIN_SOURCE,
+          InternalErrorCode.MINI_APP_ALREADY_CONNECTED,
+          InternalErrorCode.MINI_APP_BRIDGE_SLUG_TAKEN,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Connect an ADMIN mini app to a Bridge',
+        description:
+          "Record the Bridge's slug on the mini app and issue the notification key the platform sends with (audience-bound and metered like a Builder App's key, returned once). From now on every Notification Response of the app is delivered to the platform relay under the Bridge slug, overriding the app's own callback URL (which stays stored). A PLATFORM-source or already-connected app is a 409.",
+      },
+    }
+  )
+  .delete(
+    '/admin-mini-apps/:id/bridge',
+    async ({ params, status, platformMiniAppService }) => {
+      const result = await platformMiniAppService.disconnectBridge(params.id)
+
+      if (result.isErr()) {
+        return mapErrorCodeToResponse(result.error, status)
+      }
+
+      return status(200, result.value)
+    },
+    {
+      requiredPlatformService: true,
+      params: MiniAppIdParams,
+      response: {
+        200: DisconnectBridgeResponse,
+        ...createErrorSchema(
+          InternalErrorCode.UNAUTHORIZED,
+          InternalErrorCode.MINI_APP_NOT_FOUND,
+          InternalErrorCode.INTERNAL_SERVER_ERROR
+        ),
+      },
+      detail: {
+        summary: 'Disconnect an ADMIN mini app from its Bridge',
+        description:
+          "Clear the Bridge slug and deactivate the app's PLATFORM-source notification key. Responses fall back to the app's own callback URL. The app, its App Users, ADMIN keys and settings are untouched. Idempotent: an app with no Bridge answers `disconnected: false`.",
       },
     }
   )

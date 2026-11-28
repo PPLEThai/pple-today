@@ -384,6 +384,19 @@ const MINI_APP_ERROR_SCHEMA = {
   MINI_APP_CALLBACK_NOT_CONFIGURED: {
     status: 409,
   },
+  // Connect to a platform Bridge was asked of an app that is not ADMIN-source
+  // (a Builder App is already the platform's own).
+  MINI_APP_NOT_ADMIN_SOURCE: {
+    status: 409,
+  },
+  // Connect was asked of an app that already has a Bridge: one mini-app, one Bridge.
+  MINI_APP_ALREADY_CONNECTED: {
+    status: 409,
+  },
+  // Connect named a Bridge slug another mini-app is already connected to.
+  MINI_APP_BRIDGE_SLUG_TAKEN: {
+    status: 409,
+  },
 } satisfies InternalErrorSchemas
 
 const ZITADEL_ERROR_SCHEMA = {

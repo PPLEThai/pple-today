@@ -437,4 +437,98 @@ export class PlatformMiniAppRepository {
       })
     )
   }
+
+  /**
+   * The non-retired ADMIN-source mini-apps, for the platform Console's picker
+   * of which one to connect to a Bridge. `platformBridgeSlug` says which are
+   * already connected.
+   */
+  async listAdminMiniApps() {
+    return await fromRepositoryPromise(
+      this.prismaService.miniApp.findMany({
+        where: { source: MiniAppSource.ADMIN, retiredAt: null },
+        select: { id: true, slug: true, name: true, icon: true, platformBridgeSlug: true },
+        orderBy: [{ order: 'asc' }, { createdAt: 'desc' }],
+      })
+    )
+  }
+
+  /**
+   * Connect an ADMIN-source mini-app to a platform Bridge, in one transaction:
+   * stamp `platformBridgeSlug` and mint the app's PLATFORM-source notification
+   * key (audience-bound, metered). Returns the plaintext key — the only time it
+   * is available in the clear — or a domain refusal.
+   *
+   * The stamp is a conditional `updateMany` (`platformBridgeSlug: null`), so two
+   * racing connects cannot both win. A Bridge slug already held by another app
+   * surfaces as a unique-constraint error for the service to map.
+   */
+  async connectBridge(id: string, bridgeSlug: string) {
+    const notificationApiKey = generateNotificationApiKey()
+
+    const connected = await fromRepositoryPromise(
+      this.prismaService.$transaction(async (tx) => {
+        const app = await tx.miniApp.findUnique({
+          where: { id },
+          select: { name: true, source: true, retiredAt: true, platformBridgeSlug: true },
+        })
+        if (!app || app.retiredAt !== null) return { refusal: 'NOT_FOUND' as const }
+        if (app.source !== MiniAppSource.ADMIN) return { refusal: 'NOT_ADMIN_SOURCE' as const }
+        if (app.platformBridgeSlug !== null) return { refusal: 'ALREADY_CONNECTED' as const }
+
+        const { count } = await tx.miniApp.updateMany({
+          where: { id, platformBridgeSlug: null },
+          data: { platformBridgeSlug: bridgeSlug },
+        })
+        if (count === 0) return { refusal: 'ALREADY_CONNECTED' as const }
+
+        // PLATFORM-sourced on an ADMIN app: audience-bound and metered, held by
+        // the platform (the admin portal refuses to manage PLATFORM keys).
+        await tx.notificationApiKey.create({
+          data: {
+            name: app.name,
+            apiKey: hashNotificationApiKey(notificationApiKey),
+            miniAppId: id,
+            source: NotificationApiKeySource.PLATFORM,
+          },
+        })
+
+        return { refusal: null }
+      })
+    )
+
+    if (connected.isErr()) return err(connected.error)
+    if (connected.value.refusal) return ok({ refusal: connected.value.refusal })
+    return ok({ refusal: null, miniAppId: id, bridgeSlug, notificationApiKey })
+  }
+
+  /**
+   * Disconnect, in one transaction: clear `platformBridgeSlug` and deactivate the
+   * app's active PLATFORM-source keys. Nothing else is touched — its ADMIN keys,
+   * App Users, settings and stored callback URL/secret stay, so responses fall
+   * back to the app's own callback again. `wasConnected` is false for an app
+   * that had no Bridge (the key sweep still runs; it is a no-op then).
+   */
+  async disconnectBridge(id: string) {
+    const result = await fromRepositoryPromise(
+      this.prismaService.$transaction(async (tx) => {
+        const app = await tx.miniApp.findUnique({
+          where: { id },
+          select: { source: true, retiredAt: true, platformBridgeSlug: true },
+        })
+        if (!app || app.retiredAt !== null || app.source !== MiniAppSource.ADMIN) return null
+
+        await tx.miniApp.update({ where: { id }, data: { platformBridgeSlug: null } })
+        await tx.notificationApiKey.updateMany({
+          where: { miniAppId: id, source: NotificationApiKeySource.PLATFORM, active: true },
+          data: { active: false },
+        })
+        return { wasConnected: app.platformBridgeSlug !== null }
+      })
+    )
+
+    if (result.isErr()) return err(result.error)
+    if (!result.value) return ok(null)
+    return ok(result.value)
+  }
 }

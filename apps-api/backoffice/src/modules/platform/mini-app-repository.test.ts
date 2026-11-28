@@ -15,6 +15,8 @@ import { miniAppResponseInclude } from '../mini-app/dto'
 const createPrismaService = () => {
   const tx = {
     miniApp: {
+      findUnique: vi.fn().mockResolvedValue(null),
+      updateMany: vi.fn().mockResolvedValue({ count: 1 }),
       create: vi.fn().mockResolvedValue({ id: 'app-1', miniAppRoles: [] }),
       update: vi.fn().mockResolvedValue({ id: 'app-1', miniAppRoles: [], linkNames: [] }),
       findFirst: vi.fn().mockResolvedValue(null),
@@ -438,5 +440,121 @@ describe('PlatformMiniAppRepository link name lifecycle', () => {
 
     expect(result._unsafeUnwrap()).toEqual({ message: 'Link name released' })
     expect(names).toEqual([{ name: 'current', miniAppId: 'app-1', canonicalForId: 'app-1' }])
+  })
+})
+
+describe('PlatformMiniAppRepository.connectBridge', () => {
+  const adminApp = {
+    name: 'Leave',
+    source: MiniAppSource.ADMIN,
+    retiredAt: null,
+    platformBridgeSlug: null,
+  }
+
+  test('stamps the slug and mints a PLATFORM-source key bound to the app, in one transaction', async () => {
+    const { prismaService, tx } = createPrismaService()
+    tx.miniApp.findUnique.mockResolvedValue(adminApp)
+    const repository = new PlatformMiniAppRepository(prismaService)
+
+    const result = (await repository.connectBridge('app-1', 'bridge'))._unsafeUnwrap()
+
+    expect(prismaService.$transaction).toHaveBeenCalledTimes(1)
+    expect(tx.miniApp.updateMany).toHaveBeenCalledWith({
+      where: { id: 'app-1', platformBridgeSlug: null },
+      data: { platformBridgeSlug: 'bridge' },
+    })
+    const keyData = tx.notificationApiKey.create.mock.calls[0][0].data
+    expect(keyData).toMatchObject({ miniAppId: 'app-1', source: 'PLATFORM' })
+    expect(result.refusal).toBeNull()
+    expect(result).toMatchObject({ bridgeSlug: 'bridge' })
+    // The stored value is a hash, never the plaintext handed back.
+    expect(keyData.apiKey).not.toBe((result as { notificationApiKey: string }).notificationApiKey)
+  })
+
+  test.each([
+    ['PLATFORM-source', { ...adminApp, source: MiniAppSource.PLATFORM }, 'NOT_ADMIN_SOURCE'],
+    ['already connected', { ...adminApp, platformBridgeSlug: 'other' }, 'ALREADY_CONNECTED'],
+    ['retired', { ...adminApp, retiredAt: new Date() }, 'NOT_FOUND'],
+    ['missing', null, 'NOT_FOUND'],
+  ])('refuses a %s app without writing', async (_label, row, refusal) => {
+    const { prismaService, tx } = createPrismaService()
+    tx.miniApp.findUnique.mockResolvedValue(row)
+    const repository = new PlatformMiniAppRepository(prismaService)
+
+    const result = (await repository.connectBridge('app-1', 'bridge'))._unsafeUnwrap()
+
+    expect(result.refusal).toBe(refusal)
+    expect(tx.miniApp.updateMany).not.toHaveBeenCalled()
+    expect(tx.notificationApiKey.create).not.toHaveBeenCalled()
+  })
+
+  test('loses a race cleanly: a conditional stamp that matches nothing is ALREADY_CONNECTED', async () => {
+    const { prismaService, tx } = createPrismaService()
+    tx.miniApp.findUnique.mockResolvedValue(adminApp)
+    tx.miniApp.updateMany.mockResolvedValue({ count: 0 })
+    const repository = new PlatformMiniAppRepository(prismaService)
+
+    const result = (await repository.connectBridge('app-1', 'bridge'))._unsafeUnwrap()
+
+    expect(result.refusal).toBe('ALREADY_CONNECTED')
+    expect(tx.notificationApiKey.create).not.toHaveBeenCalled()
+  })
+})
+
+describe('PlatformMiniAppRepository.disconnectBridge', () => {
+  test('clears the slug and deactivates only active PLATFORM-source keys', async () => {
+    const { prismaService, tx } = createPrismaService()
+    tx.miniApp.findUnique.mockResolvedValue({
+      source: MiniAppSource.ADMIN,
+      retiredAt: null,
+      platformBridgeSlug: 'bridge',
+    })
+    const repository = new PlatformMiniAppRepository(prismaService)
+
+    const result = (await repository.disconnectBridge('app-1'))._unsafeUnwrap()
+
+    expect(result).toEqual({ wasConnected: true })
+    expect(tx.miniApp.update).toHaveBeenCalledWith({
+      where: { id: 'app-1' },
+      data: { platformBridgeSlug: null },
+    })
+    expect(tx.notificationApiKey.updateMany).toHaveBeenCalledWith({
+      where: { miniAppId: 'app-1', source: 'PLATFORM', active: true },
+      data: { active: false },
+    })
+    // Nothing else is touched.
+    expect(tx.notificationResponse.updateMany).not.toHaveBeenCalled()
+    expect(tx.miniAppLinkName.deleteMany).not.toHaveBeenCalled()
+  })
+
+  test('reports an unconnected ADMIN app as not having been connected', async () => {
+    const { prismaService, tx } = createPrismaService()
+    tx.miniApp.findUnique.mockResolvedValue({
+      source: MiniAppSource.ADMIN,
+      retiredAt: null,
+      platformBridgeSlug: null,
+    })
+    const repository = new PlatformMiniAppRepository(prismaService)
+
+    expect((await repository.disconnectBridge('app-1'))._unsafeUnwrap()).toEqual({
+      wasConnected: false,
+    })
+  })
+
+  test.each([
+    [
+      'PLATFORM-source',
+      { source: MiniAppSource.PLATFORM, retiredAt: null, platformBridgeSlug: null },
+    ],
+    ['retired', { source: MiniAppSource.ADMIN, retiredAt: new Date(), platformBridgeSlug: 'b' }],
+    ['missing', null],
+  ])('returns null for a %s app and writes nothing', async (_label, row) => {
+    const { prismaService, tx } = createPrismaService()
+    tx.miniApp.findUnique.mockResolvedValue(row)
+    const repository = new PlatformMiniAppRepository(prismaService)
+
+    expect((await repository.disconnectBridge('app-1'))._unsafeUnwrap()).toBeNull()
+    expect(tx.miniApp.update).not.toHaveBeenCalled()
+    expect(tx.notificationApiKey.updateMany).not.toHaveBeenCalled()
   })
 })
